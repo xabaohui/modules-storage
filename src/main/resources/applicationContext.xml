@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!-- <context:property-placeholder location="classpath:db.properties" /> -->
+	<!-- 添加注解支持 -->
+	<context:annotation-config></context:annotation-config>
+	<!-- 添加注解扫描包 -->
+	<!-- <context:component-scan base-package="src/main/java/com.zis.cangku.Dao.impl"></context:component-scan> -->
+
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver">
+		</property>
+		<property name="url"
+			value="jdbc:mysql://127.0.0.1:3306/zis?useUnicode=true&amp;characterEncoding=UTF-8" />
+		<property name="username" value="root"></property>
+		<property name="password" value="123456"></property>
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+		<property name="mappingResources">
+			<list>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageProduct.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageCheckPlan.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageIoDetail.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageIoTask.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StoragePosLocation.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StoragePosition.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageCheckSnap.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageCheckDiffAdjust.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageCheck.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageCheckDiff.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StorageWarehouseInfo.hbm.xml
+				</value>
+				<value>
+					com/xabaohui/modules/storage/entiry/StoragePosStock.hbm.xml
+				</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- 配置事务管理器 -->
+	<bean name="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+	<!-- 注解方式配置事物 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<!-- 拦截器方式配置事物 -->
+	<!-- <tx:advice id="transactionAdvice" transaction-manager="transactionManager"> 
+		<tx:attributes> 以如下关键字开头的方法使用事物 <tx:method name="*Add" /> <tx:method name="save*" 
+		/> <tx:method name="update*" /> <tx:method name="modify*" /> <tx:method name="edit*" 
+		/> <tx:method name="delete*" /> <tx:method name="remove*" /> <tx:method name="repair" 
+		/> <tx:method name="deleteAndRepair" /> 以如下关键字开头的方法不使用事物 <tx:method name="get*" 
+		propagation="SUPPORTS" /> <tx:method name="find*" propagation="SUPPORTS" 
+		/> <tx:method name="load*" propagation="SUPPORTS" /> <tx:method name="search*" 
+		propagation="SUPPORTS" /> <tx:method name="datagrid*" propagation="SUPPORTS" 
+		/> 其他方法不使用事物 <tx:method name="*" propagation="SUPPORTS" /> </tx:attributes> 
+		</tx:advice> -->
+	<!-- 切面，将事物用在哪些对象上 -->
+	<!-- <aop:config> <aop:pointcut id="transactionPointcut" expression="execution(* 
+		com.xabaohui.modules.storage.bo..*Impl.*(..))" /> <aop:advisor pointcut-ref="transactionPointcut" 
+		advice-ref="transactionAdvice" /> </aop:config> -->
+		
+	<bean id="storageProductDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageProductDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageIoTaskDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageIoTaskDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storagePositionDao"
+		class="com.xabaohui.modules.storage.dao.impl.StoragePositionDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storagePosLocationDao"
+		class="com.xabaohui.modules.storage.dao.impl.StoragePosLocationDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageCheckSnapDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageCheckSnapDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageCheckPlanDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageCheckPlanDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageCheckDiffAdjustDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageCheckDiffAdjustDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageCheckDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageCheckDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageWarehouseInfoDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageWarehouseInfoDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storagePosStockDao"
+		class="com.xabaohui.modules.storage.dao.impl.StoragePosStockDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageIoDetailDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageIoDetailDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="storageCheckDiffDao"
+		class="com.xabaohui.modules.storage.dao.impl.StorageCheckDiffDaoImpl"
+		scope="prototype">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+
+	<bean id="checkStockBo" class="com.xabaohui.modules.storage.bo.impl.CheckStockBoImpl" >
+	</bean>
+
+	<bean id="inwarehouseBo" class="com.xabaohui.modules.storage.bo.impl.InwarehouseBoImpl">
+	</bean>
+
+	<bean id="outwarehouseBo" class="com.xabaohui.modules.storage.bo.impl.OutwarehouseBoImpl">
+	</bean>
+
+	<bean id="storageOperaterService" class="com.xabaohui.modules.storage.service.impl.StorageOperaterServiceImpl">
+	</bean> 
+</beans>
