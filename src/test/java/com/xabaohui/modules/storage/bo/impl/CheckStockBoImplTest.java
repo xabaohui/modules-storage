@@ -170,4 +170,53 @@ public class CheckStockBoImplTest {
 			log.info(result.getSkuId()+"--"+result.getRealamount()+"--"+result.getStockamount());
 		}
 	}
+	@Test
+	public void testCompareDiff5() {
+		// 添加库位记录
+		StoragePosition position1 = inwarehouseBo.addStoragePosition("a5-55-22-07", 200, "测试库位");
+		int operator = 444444;
+		String memo = "测试入库";
+		// 创建盘点
+		StorageCheck check = checkStockBo.addStorageCheck(position1.getPositionId(), null, operator, memo);
+		// 添加库存明细数据positionId skuId amount
+		inwarehouseBo.addStoragePosStock(position1.getPositionId(), 500011, 2);
+		inwarehouseBo.addStoragePosStock(position1.getPositionId(), 500014, 2);
+		inwarehouseBo.addStoragePosStock(position1.getPositionId(), 500016, 2);
+		inwarehouseBo.addStoragePosStock(position1.getPositionId(), 500018, 2);
+		//比较
+		List<StorageCheckDiffReaultDetail> listReault =
+				checkStockBo.compareDiff(check.getCheckId(), ConstantStorageCheckCheckTime.FIRST_CHECK);
+		assertEquals(4, listReault.size());
+		for (StorageCheckDiffReaultDetail result : listReault) {
+			log.info(result.getSkuId()+"--"+result.getRealamount()+"--"+result.getStockamount());
+		}
+	}
+	@Test
+	public void testCompareDiff6() {
+		// 添加库位记录
+		StoragePosition position1 = inwarehouseBo.addStoragePosition("a6-66-22-07", 200, "测试库位");
+		int operator = 444444;
+		String memo = "测试入库";
+		// 创建盘点
+		StorageCheck check = checkStockBo.addStorageCheck(position1.getPositionId(), null, operator, memo);
+		// 添加快照数据 list checkId checkTime
+		List<StorageCheckSnapDataDetail> list = new ArrayList<StorageCheckSnapDataDetail>();
+		list.add(new StorageCheckSnapDataDetail(600011, 1));
+		list.add(new StorageCheckSnapDataDetail(600012, 2));
+		list.add(new StorageCheckSnapDataDetail(600013, 3));
+		list.add(new StorageCheckSnapDataDetail(600014, 2));
+		list.add(new StorageCheckSnapDataDetail(600015, 3));
+		list.add(new StorageCheckSnapDataDetail(600016, 3));
+		list.add(new StorageCheckSnapDataDetail(600017, 3));
+		checkStockBo.addCheckSnapData(list, check.getCheckId(),
+				ConstantStorageCheckCheckTime.FIRST_CHECK);
+
+		//比较
+		List<StorageCheckDiffReaultDetail> listReault =
+				checkStockBo.compareDiff(check.getCheckId(), ConstantStorageCheckCheckTime.FIRST_CHECK);
+		assertEquals(7, listReault.size());
+		for (StorageCheckDiffReaultDetail result : listReault) {
+			log.info(result.getSkuId()+"--"+result.getRealamount()+"--"+result.getStockamount());
+		}
+	}
 }

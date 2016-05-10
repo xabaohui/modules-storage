@@ -371,7 +371,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 		List<StorageCheckSnapDataDetail> listSnapDetails = new ArrayList<StorageCheckSnapDataDetail>();
 		List<StorageCheckSnap> listSnap = this.findByCheckIdAndCheckTime(checkId,ConstantStorageCheckCheckTime.FIRST_CHECK);
 		if(listSnap==null||listSnap.isEmpty()){
-			throw new RuntimeException("盘点数据为空");
+			return listSnapDetails;
 		}
 		for (StorageCheckSnap snap : listSnap) {
 			listSnapDetails.add(new StorageCheckSnapDataDetail(snap.getSkuId(),snap.getSnapNum()));
@@ -383,7 +383,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 		List<StorageCheckSnapDataDetail> listPosDetails = new ArrayList<StorageCheckSnapDataDetail>();
 		List<StoragePosStock> listPos = this.findStoragePosStockByPositionId(positionId);//数据库记录的明细
 		if(listPos==null||listPos.isEmpty()){
-			throw new RuntimeException("库位数据为空");
+			return listPosDetails;
 		}
 		for (StoragePosStock storagePosStock : listPos) {
 			listPosDetails.add(new StorageCheckSnapDataDetail( storagePosStock.getSkuId(),storagePosStock.getAmount()));
