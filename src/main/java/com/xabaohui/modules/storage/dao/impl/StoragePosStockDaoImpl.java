@@ -9,7 +9,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.xabaohui.modules.storage.dao.StoragePosStockDao;
-import com.xabaohui.modules.storage.entiry.StoragePosStock;
+import com.xabaohui.modules.storage.entity.StoragePosStock;
 
 /**
  * A data access object (DAO) providing persistence and search support for
@@ -19,7 +19,7 @@ import com.xabaohui.modules.storage.entiry.StoragePosStock;
  * transactions. Each of these methods provides additional information for how
  * to configure it for the desired type of transaction control.
  * 
- * @see com.xabaohui.modules.storage.entiry.StoragePosStock
+ * @see com.xabaohui.modules.storage.entity.StoragePosStock
  * @author MyEclipse Persistence Tools
  */
 public class StoragePosStockDaoImpl extends HibernateDaoSupport implements StoragePosStockDao {

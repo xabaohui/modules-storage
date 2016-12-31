@@ -8,7 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.xabaohui.modules.storage.dao.StorageCheckDiffDao;
-import com.xabaohui.modules.storage.entiry.StorageCheckDiff;
+import com.xabaohui.modules.storage.entity.StorageCheckDiff;
 
 /**
  * A data access object (DAO) providing persistence and search support for
@@ -18,7 +18,7 @@ import com.xabaohui.modules.storage.entiry.StorageCheckDiff;
  * transactions. Each of these methods provides additional information for how
  * to configure it for the desired type of transaction control.
  * 
- * @see com.xabaohui.modules.storage.entiry.StorageCheckDiff
+ * @see com.xabaohui.modules.storage.entity.StorageCheckDiff
  * @author MyEclipse Persistence Tools
  */
 public class StorageCheckDiffDaoImpl extends HibernateDaoSupport implements

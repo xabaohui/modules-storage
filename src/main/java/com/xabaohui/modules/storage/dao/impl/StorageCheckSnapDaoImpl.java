@@ -9,7 +9,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.xabaohui.modules.storage.dao.StorageCheckSnapDao;
-import com.xabaohui.modules.storage.entiry.StorageCheckSnap;
+import com.xabaohui.modules.storage.entity.StorageCheckSnap;
 
 /**
  * A data access object (DAO) providing persistence and search support for
@@ -19,7 +19,7 @@ import com.xabaohui.modules.storage.entiry.StorageCheckSnap;
  * transactions. Each of these methods provides additional information for how
  * to configure it for the desired type of transaction control.
  * 
- * @see com.xabaohui.modules.storage.entiry.StorageCheckSnap
+ * @see com.xabaohui.modules.storage.entity.StorageCheckSnap
  * @author MyEclipse Persistence Tools
  */
 public class StorageCheckSnapDaoImpl extends HibernateDaoSupport implements StorageCheckSnapDao{

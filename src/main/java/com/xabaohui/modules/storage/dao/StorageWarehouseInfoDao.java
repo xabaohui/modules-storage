@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.criterion.DetachedCriteria;
 
-import com.xabaohui.modules.storage.entiry.StorageWarehouseInfo;
+import com.xabaohui.modules.storage.entity.StorageWarehouseInfo;
 
 public interface StorageWarehouseInfoDao {
 

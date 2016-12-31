@@ -9,7 +9,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.xabaohui.modules.storage.dao.StorageCheckPlanDao;
-import com.xabaohui.modules.storage.entiry.StorageCheckPlan;
+import com.xabaohui.modules.storage.entity.StorageCheckPlan;
 
 /**
  * A data access object (DAO) providing persistence and search support for

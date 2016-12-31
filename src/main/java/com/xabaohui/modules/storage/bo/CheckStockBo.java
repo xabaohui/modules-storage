@@ -2,12 +2,11 @@ package com.xabaohui.modules.storage.bo;
 
 import java.util.List;
 
-
 import com.xabaohui.modules.storage.dto.StorageCheckDiffReaultDetail;
 import com.xabaohui.modules.storage.dto.StorageCheckSnapDataDetail;
-import com.xabaohui.modules.storage.entiry.StorageCheck;
-import com.xabaohui.modules.storage.entiry.StorageCheckPlan;
-import com.xabaohui.modules.storage.entiry.StorageCheckSnap;
+import com.xabaohui.modules.storage.entity.StorageCheck;
+import com.xabaohui.modules.storage.entity.StorageCheckPlan;
+import com.xabaohui.modules.storage.entity.StorageCheckSnap;
 
 public interface CheckStockBo {
 
@@ -28,7 +27,7 @@ public interface CheckStockBo {
 	 * @param checkPlanId
 	 * @param operator操作员ID
 	 */
-	StorageCheck addStorageCheck(int positionId, Integer checkPlanId,int operator, String memo);
+	StorageCheck addStorageCheck(int positionId, Integer checkPlanId, int operator, String memo);
 
 	/**
 	 * 添加盘点快照数据
@@ -38,7 +37,7 @@ public interface CheckStockBo {
 	 * @param checkTime盘点次数
 	 *            (一次/二次)
 	 */
-	void addCheckSnapData(List<StorageCheckSnapDataDetail> list, int checkId,String checkTime);
+	void addCheckSnapData(List<StorageCheckSnapDataDetail> list, int checkId, String checkTime);
 
 	/**
 	 * 比较差异
@@ -52,13 +51,15 @@ public interface CheckStockBo {
 
 	/**
 	 * 添加差异数据<两次盘点之后>
+	 * 
 	 * @param list
 	 * @param checkId
 	 */
-	void addCheckDiff(List<StorageCheckDiffReaultDetail> list,Integer checkId,int positionId);
-	
+	void addCheckDiff(List<StorageCheckDiffReaultDetail> list, Integer checkId, int positionId);
+
 	/**
-	 *  调整库存
+	 * 调整库存
+	 * 
 	 * @param operator
 	 * @param memo
 	 * @param checkId
@@ -69,16 +70,18 @@ public interface CheckStockBo {
 	void changeStock(int operator, String memo, int checkId, int skuId, int realAmount);
 
 	/**
-	 *  查询快照数据
+	 * 查询快照数据
+	 * 
 	 * @param checkId
 	 * @param checkTime
 	 * @return
 	 */
 	List<StorageCheckSnap> findCheckSnapData(Integer checkId, String checkTime);
-	
+
 	/**
 	 * 解锁库位
+	 * 
 	 * @param checkId
 	 */
-	void unLockPosition(int operator,int positionId);
+	void unLockPosition(int operator, int positionId);
 }

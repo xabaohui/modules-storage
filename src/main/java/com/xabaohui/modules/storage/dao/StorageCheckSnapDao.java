@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.criterion.DetachedCriteria;
 
-import com.xabaohui.modules.storage.entiry.StorageCheckSnap;
+import com.xabaohui.modules.storage.entity.StorageCheckSnap;
 
 public interface StorageCheckSnapDao {
 	void save(StorageCheckSnap transientInstance);

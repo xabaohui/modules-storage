@@ -18,14 +18,14 @@
 	<!-- 添加注解扫描包 -->
 	<!-- <context:component-scan base-package="src/main/java/com.zis.cangku.Dao.impl"></context:component-scan> -->
 
-
-	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
-		<property name="driverClassName" value="com.mysql.jdbc.Driver">
-		</property>
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp.BasicDataSource">
 		<property name="url"
-			value="jdbc:mysql://127.0.0.1:3306/zis?useUnicode=true&amp;characterEncoding=UTF-8" />
+			value="jdbc:mysql://localhost:3306/zisdb?useUnicode=true&amp;characterEncoding=UTF-8">
+		</property>
 		<property name="username" value="root"></property>
 		<property name="password" value="123456"></property>
+		<property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
 	</bean>
 
 	<bean id="sessionFactory"

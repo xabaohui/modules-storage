@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.criterion.DetachedCriteria;
 
-import com.xabaohui.modules.storage.entiry.StorageCheckDiff;
+import com.xabaohui.modules.storage.entity.StorageCheckDiff;
 
 public interface StorageCheckDiffDao {
 

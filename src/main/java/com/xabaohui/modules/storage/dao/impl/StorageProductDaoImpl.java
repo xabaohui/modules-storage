@@ -8,7 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.xabaohui.modules.storage.dao.StorageProductDao;
-import com.xabaohui.modules.storage.entiry.StorageProduct;
+import com.xabaohui.modules.storage.entity.StorageProduct;
 
 /**
  * A data access object (DAO) providing persistence and search support for
@@ -18,7 +18,7 @@ import com.xabaohui.modules.storage.entiry.StorageProduct;
  * transactions. Each of these methods provides additional information for how
  * to configure it for the desired type of transaction control. 库存
  * 
- * @see com.xabaohui.modules.storage.entiry.StorageProduct
+ * @see com.xabaohui.modules.storage.entity.StorageProduct
  * @author MyEclipse Persistence Tools
  */
 public class StorageProductDaoImpl extends HibernateDaoSupport implements

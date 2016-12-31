@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.criterion.DetachedCriteria;
 
-import com.xabaohui.modules.storage.entiry.StoragePosLocation;
+import com.xabaohui.modules.storage.entity.StoragePosLocation;
 
 public interface StoragePosLocationDao {
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.criterion.DetachedCriteria;
 
-import com.xabaohui.modules.storage.entiry.StoragePosStock;
+import com.xabaohui.modules.storage.entity.StoragePosStock;
 
 public interface StoragePosStockDao {
 

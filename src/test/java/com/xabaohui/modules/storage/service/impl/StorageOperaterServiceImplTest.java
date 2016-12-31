@@ -25,10 +25,10 @@ import com.xabaohui.modules.storage.dto.DistrBatchRequestDTO;
 import com.xabaohui.modules.storage.dto.DistrBatchRequestDetail;
 import com.xabaohui.modules.storage.dto.StorageCheckSnapDataDetail;
 import com.xabaohui.modules.storage.dto.StorageInwarehouseDataDetail;
-import com.xabaohui.modules.storage.entiry.StorageCheck;
-import com.xabaohui.modules.storage.entiry.StorageCheckPlan;
-import com.xabaohui.modules.storage.entiry.StorageCheckSnap;
-import com.xabaohui.modules.storage.entiry.StoragePosition;
+import com.xabaohui.modules.storage.entity.StorageCheck;
+import com.xabaohui.modules.storage.entity.StorageCheckPlan;
+import com.xabaohui.modules.storage.entity.StorageCheckSnap;
+import com.xabaohui.modules.storage.entity.StoragePosition;
 import com.xabaohui.modules.storage.service.StorageOperaterService;
 
 

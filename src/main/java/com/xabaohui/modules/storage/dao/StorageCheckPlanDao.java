@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.criterion.DetachedCriteria;
 
-import com.xabaohui.modules.storage.entiry.StorageCheckPlan;
+import com.xabaohui.modules.storage.entity.StorageCheckPlan;
 
 public interface StorageCheckPlanDao {
 

@@ -3,7 +3,8 @@ package com.xabaohui.modules.storage.dao;
 import java.util.List;
 
 import org.hibernate.criterion.DetachedCriteria;
-import com.xabaohui.modules.storage.entiry.StorageProduct;
+
+import com.xabaohui.modules.storage.entity.StorageProduct;
 
 public interface StorageProductDao {
 
