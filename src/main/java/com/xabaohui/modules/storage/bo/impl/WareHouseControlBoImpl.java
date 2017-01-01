@@ -6,18 +6,8 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.criterion.DetachedCriteria;
-import org.hibernate.criterion.Order;
-import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 
-import com.xabaohui.modules.storage.dao.StorageCheckDao;
-import com.xabaohui.modules.storage.dao.StorageCheckDiffAdjustDao;
-import com.xabaohui.modules.storage.dao.StorageCheckDiffDao;
-import com.xabaohui.modules.storage.dao.StorageCheckPlanDao;
-import com.xabaohui.modules.storage.dao.StorageCheckSnapDao;
-import com.xabaohui.modules.storage.dao.StoragePosStockDao;
-import com.xabaohui.modules.storage.dao.StorageProductDao;
 import com.xabaohui.modules.storage.entity.StorageCheck;
 import com.xabaohui.modules.storage.entity.StorageCheckDiff;
 import com.xabaohui.modules.storage.entity.StorageCheckDiffAdjust;
@@ -30,9 +20,16 @@ import com.xabaohui.modules.storage.entity.StoragePosStock;
 import com.xabaohui.modules.storage.entity.StoragePosition;
 import com.xabaohui.modules.storage.entity.StorageProduct;
 import com.xabaohui.modules.storage.exception.StockNotEnoughException;
+import com.xabaohui.modules.storage.repository.StorageCheckDao;
+import com.xabaohui.modules.storage.repository.StorageCheckDiffAdjustDao;
+import com.xabaohui.modules.storage.repository.StorageCheckDiffDao;
+import com.xabaohui.modules.storage.repository.StorageCheckPlanDao;
+import com.xabaohui.modules.storage.repository.StorageCheckSnapDao;
 import com.xabaohui.modules.storage.repository.StorageIoDetailDao;
 import com.xabaohui.modules.storage.repository.StorageIoTaskDao;
+import com.xabaohui.modules.storage.repository.StoragePosStockDao;
 import com.xabaohui.modules.storage.repository.StoragePositionDao;
+import com.xabaohui.modules.storage.repository.StorageProductDao;
 
 public abstract class WareHouseControlBoImpl {
 	@Resource
@@ -429,11 +426,11 @@ public abstract class WareHouseControlBoImpl {
 	}
 
 	private StorageIoDetail processFindIodetaiInstance(Integer taskId, Integer positionId, Integer skuId, Integer amount) {// updateStorageIoDetailProcess
-		StorageIoDetail storageIoDetail = new StorageIoDetail();
-		storageIoDetail.setTaskId(taskId);
-		storageIoDetail.setSkuId(skuId);
-		storageIoDetail.setPositionId(positionId);
-		List<StorageIoDetail> list = storageIoDetailDao.findByExample(storageIoDetail);
+//		StorageIoDetail storageIoDetail = new StorageIoDetail();
+//		storageIoDetail.setTaskId(taskId);
+//		storageIoDetail.setSkuId(skuId);
+//		storageIoDetail.setPositionId(positionId);
+		List<StorageIoDetail> list = storageIoDetailDao.findByTaskIdAndSkuIdAndPositionId(taskId, skuId, positionId);
 		if (list == null || list.isEmpty()) {
 			throw new RuntimeException("无库存变动明细");
 		}
@@ -484,13 +481,13 @@ public abstract class WareHouseControlBoImpl {
 	protected void updateStoragePosStock(StoragePosStock posStock) {
 		posStock.setGmtModify(nowTime());
 		posStock.setVersion(posStock.getVersion() + 1);
-		storagePosStockDao.update(posStock);
+		storagePosStockDao.save(posStock);
 	}
 
 	protected void updateStorageProduct(StorageProduct storageProduct) {
 		storageProduct.setGmtModify(nowTime());
 		storageProduct.setVersion(storageProduct.getVersion() + 1);
-		storageProductDao.update(storageProduct);
+		storageProductDao.save(storageProduct);
 	}
 
 	protected StorageIoTask saveStorageIoTask(StorageIoTask storageIoTask) {
@@ -538,7 +535,7 @@ public abstract class WareHouseControlBoImpl {
 	protected void updateStorageCheckSnap(StorageCheckSnap instance) {
 		instance.setGmtModify(nowTime());
 		instance.setVersion(instance.getVersion());
-		storageCheckSnapDao.update(instance);
+		storageCheckSnapDao.save(instance);
 
 	}
 
@@ -552,7 +549,7 @@ public abstract class WareHouseControlBoImpl {
 	protected void updateStorageCheck(StorageCheck instance) {
 		instance.setGmtModify(nowTime());
 		instance.setVersion(instance.getVersion() + 1);
-		storageCheckDao.update(instance);
+		storageCheckDao.save(instance);
 	}
 
 	protected void saveStorageCheckDiff(StorageCheckDiff checkDiff) {
@@ -565,13 +562,13 @@ public abstract class WareHouseControlBoImpl {
 	protected void updateStorageCheckDiff(StorageCheckDiff checkDiff) {
 		checkDiff.setGmtModify(nowTime());
 		checkDiff.setVersion(checkDiff.getVersion() + 1);
-		storageCheckDiffDao.update(checkDiff);
+		storageCheckDiffDao.save(checkDiff);
 	}
 
 	protected void updateStorageCheckPlan(StorageCheckPlan checkPlan) {
 		checkPlan.setGmtModify(nowTime());
 		checkPlan.setVersion(checkPlan.getVersion() + 1);
-		storageCheckPlanDao.update(checkPlan);
+		storageCheckPlanDao.save(checkPlan);
 	}
 
 	/**
@@ -581,9 +578,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return StorageProduct
 	 */
 	public StorageProduct findStorageProductBySkuId(Integer skuId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageProduct.class);
-		criteria.add(Restrictions.eq("skuId", skuId));
-		return findUniqueRecord(storageProductDao.findByCriteria(criteria));
+		return findUniqueRecord(storageProductDao.findBySkuId(skuId));
 	}
 
 	/**
@@ -593,9 +588,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return List<StorageProduct>
 	 */
 	public List<StorageProduct> findStorageProductListBySkuId(Integer skuId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageProduct.class);
-		criteria.add(Restrictions.eq("skuId", skuId));
-		return storageProductDao.findByCriteria(criteria);
+		return storageProductDao.findBySkuId(skuId);
 	}
 
 	/**
@@ -606,11 +599,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return List<StoragePosStock>
 	 */
 	public StoragePosStock findStoragePosStockBySkuIdAndPositionId(Integer skuId, Integer positionId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StoragePosStock.class);
-		criteria.add(Restrictions.eq("skuId", skuId));
-		criteria.add(Restrictions.eq("positionId", positionId));
-		criteria.add(Restrictions.gt("amount", 0));
-		return findUniqueRecord(storagePosStockDao.findByCriteria(criteria));
+		return findUniqueRecord(storagePosStockDao.findStoragePosStockBySkuIdAndPositionId(skuId, positionId));
 	}
 
 	// /**
@@ -635,12 +624,8 @@ public abstract class WareHouseControlBoImpl {
 	 * @param amount
 	 * @return List<StoragePosStock>
 	 */
-	public List<StoragePosStock> findBySkuIdOrderByPositionIdAndAmount(Integer skuId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StoragePosStock.class);
-		criteria.add(Restrictions.eq("skuId", skuId));
-		criteria.add(Restrictions.gt("amount", 0));
-		criteria.addOrder(Order.desc("amount"));
-		return storagePosStockDao.findByCriteria(criteria);
+	public List<StoragePosStock> findBySkuIdOrderByAmount(Integer skuId) {
+		return storagePosStockDao.findBySkuIdOrderByPositionIdAndAmount(skuId);
 	}
 
 	/**
@@ -650,9 +635,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return List<StorageCheckDiff>
 	 */
 	public List<StorageCheckDiff> findStorageCheckDiffByCheckId(Integer checkId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageCheckDiff.class);
-		criteria.add(Restrictions.eq("checkId", checkId));
-		return storageCheckDiffDao.findByCriteria(criteria);
+		return storageCheckDiffDao.findByCheckId(checkId);
 	}
 
 	/**
@@ -663,10 +646,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return StorageCheckDiff
 	 */
 	public StorageCheckDiff findStorageCheckDiffByCheckIdAndSkuId(int checkId, int skuId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageCheckDiff.class);
-		criteria.add(Restrictions.eq("checkId", checkId));
-		criteria.add(Restrictions.eq("skuId", skuId));
-		return findUniqueRecord(storageCheckDiffDao.findByCriteria(criteria));
+		return findUniqueRecord(storageCheckDiffDao.findByCheckIdAndSkuId(checkId, skuId));
 	}
 
 	/**
@@ -676,9 +656,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return List<StorageCheckDiff>
 	 */
 	public List<StorageCheckSnap> findStorageCheckSnapByCheckId(Integer checkId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageCheckSnap.class);
-		criteria.add(Restrictions.eq("checkId", checkId));
-		return storageCheckSnapDao.findByCriteria(criteria);
+		return storageCheckSnapDao.findByCheckId(checkId);
 	}
 
 	/**
@@ -689,11 +667,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return List<StorageCheckSnap>
 	 */
 	public List<StorageCheckSnap> findByCheckIdAndCheckTime(Integer checkId, String checkTime) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageCheckSnap.class);
-		criteria.add(Restrictions.eq("isdelete", false));
-		criteria.add(Restrictions.eq("checkId", checkId));
-		criteria.add(Restrictions.eq("checkTime", checkTime));
-		return storageCheckSnapDao.findByCriteria(criteria);
+		return storageCheckSnapDao.findByCheckIdAndCheckTimeNotIsDelete(checkId, checkTime);
 	}
 
 	/**
@@ -703,10 +677,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return List<StoragePosStock>
 	 */
 	public List<StoragePosStock> findStoragePosStockByPositionId(Integer positionId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StoragePosStock.class);
-		criteria.add(Restrictions.eq("positionId", positionId));
-		criteria.add(Restrictions.gt("amount", 0));
-		return storagePosStockDao.findByCriteria(criteria);
+		return storagePosStockDao.findStoragePosStockByPositionId(positionId);
 	}
 
 	/**
@@ -715,10 +686,8 @@ public abstract class WareHouseControlBoImpl {
 	 * @param checkPlanId
 	 * @return StorageCheck
 	 */
-	public List<StorageCheck> findCheckByCheckPlanId(int checkPlanId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageCheck.class);
-		criteria.add(Restrictions.eq("checkPlanId", checkPlanId));
-		return storageCheckDao.findByCriteria(criteria);
+	public List<StorageCheck> findCheckByPlanId(int PlanId) {
+		return storageCheckDao.findByPlanId(PlanId);
 	}
 
 	/**
@@ -728,9 +697,7 @@ public abstract class WareHouseControlBoImpl {
 	 * @return StorageCheckPlan
 	 */
 	public StorageCheckPlan findCheckPlanByCheckPlanId(int checkPlanId) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(StorageCheckPlan.class);
-		criteria.add(Restrictions.eq("checkPlanId", checkPlanId));
-		return findUniqueRecord(storageCheckPlanDao.findByCriteria(criteria));
+		return storageCheckPlanDao.findOne(checkPlanId);
 	}
 
 	private <T> T findUniqueRecord(List<T> list) {

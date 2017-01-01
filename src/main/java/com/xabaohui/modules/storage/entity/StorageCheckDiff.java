@@ -1,28 +1,56 @@
 package com.xabaohui.modules.storage.entity;
 
-import java.sql.Timestamp;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
 
 /**
  * StorageCheckDiff entity. @author MyEclipse Persistence Tools
  */
+@Entity
+@Table(name = "storage_check_diff")
+public class StorageCheckDiff {
 
-public class StorageCheckDiff implements java.io.Serializable {
-
-	// Fields
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 4247560478492228211L;
+	@Id
+	@GeneratedValue
+	@Column(name = "check_diff_id", nullable = false)
 	private Integer checkDiffId;
+
+	@Column(name = "check_id")
 	private Integer checkId;
+
+	@Column(name = "position_id", nullable = false)
 	private Integer positionId;
+
+	@Column(name = "sku_id")
 	private Integer skuId;
-	private Integer realamount;
-	private Integer stockamount;
+
+	@Column(name = "realamount")
+	private Integer realAmount;
+
+	@Column(name = "stockamount")
+	private Integer stockAmount;
+
+	@Column(name = "check_diff_status")
 	private String checkDiffStatus;
-	private Timestamp gmtCreate;
-	private Timestamp gmtModify;
+
+	@Column(name = "gmt_create", length = 32, updatable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtCreate;
+
+	@Column(name = "gmt_modify", length = 32)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtModify;
+
+	@Version
+	@Column(name = "version")
 	private Integer version;
 
 	// Constructors
@@ -32,23 +60,21 @@ public class StorageCheckDiff implements java.io.Serializable {
 	}
 
 	/** full constructor */
-	public StorageCheckDiff(Integer checkId, Integer positionId, Integer skuId,
-			Integer realamount, Integer stockamount, String checkDiffStatus,
-			Timestamp gmtCreate, Timestamp gmtModify, Integer version) {
+	public StorageCheckDiff(Integer checkId, Integer positionId, Integer skuId, Integer realAmount,
+			Integer stockAmount, String checkDiffStatus, Date gmtCreate, Date gmtModify, Integer version) {
 		this.checkId = checkId;
 		this.positionId = positionId;
 		this.skuId = skuId;
-		this.realamount = realamount;
-		this.stockamount = stockamount;
+		this.realAmount = realAmount;
+		this.stockAmount = stockAmount;
 		this.checkDiffStatus = checkDiffStatus;
 		this.gmtCreate = gmtCreate;
 		this.gmtModify = gmtModify;
 		this.version = version;
 	}
+
 	// Property accessors
 
-	
-	
 	public Integer getCheckDiffId() {
 		return this.checkDiffId;
 	}
@@ -89,35 +115,35 @@ public class StorageCheckDiff implements java.io.Serializable {
 		this.skuId = skuId;
 	}
 
-	public Integer getRealamount() {
-		return this.realamount;
+	public Integer getRealAmount() {
+		return this.realAmount;
 	}
 
-	public void setRealamount(Integer realamount) {
-		this.realamount = realamount;
+	public void setRealAmount(Integer realAmount) {
+		this.realAmount = realAmount;
 	}
 
-	public Integer getStockamount() {
-		return stockamount;
+	public Integer getStockAmount() {
+		return stockAmount;
 	}
 
-	public void setStockamount(Integer stockamount) {
-		this.stockamount = stockamount;
+	public void setStockAmount(Integer stockAmount) {
+		this.stockAmount = stockAmount;
 	}
 
-	public Timestamp getGmtCreate() {
+	public Date getGmtCreate() {
 		return this.gmtCreate;
 	}
 
-	public void setGmtCreate(Timestamp gmtCreate) {
+	public void setGmtCreate(Date gmtCreate) {
 		this.gmtCreate = gmtCreate;
 	}
 
-	public Timestamp getGmtModify() {
+	public Date getGmtModify() {
 		return this.gmtModify;
 	}
 
-	public void setGmtModify(Timestamp gmtModify) {
+	public void setGmtModify(Date gmtModify) {
 		this.gmtModify = gmtModify;
 	}
 

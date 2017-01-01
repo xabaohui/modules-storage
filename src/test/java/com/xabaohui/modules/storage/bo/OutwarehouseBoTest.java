@@ -100,7 +100,7 @@ public class OutwarehouseBoTest {
 
 		String result = outwarehouseBo.occupyStock("T00112312", product.getSkuId(), toBeOccupy);
 		Assert.assertNull(result);
-		StorageProduct resultData = storageProductDao.findById(product.getStockId());
+		StorageProduct resultData = storageProductDao.findOne(product.getStockId());
 		// 验证库存总量没变化
 		Assert.assertEquals(Integer.valueOf(stockAmt), resultData.getStockAmt());
 		// 验证最终占用量 = 初始化占用量 + 新增占用量
@@ -125,7 +125,7 @@ public class OutwarehouseBoTest {
 
 		String result = outwarehouseBo.occupyStock("T00112312", product.getSkuId(), toBeOccupy);
 		Assert.assertNotNull(result);
-		StorageProduct resultData = storageProductDao.findById(product.getStockId());
+		StorageProduct resultData = storageProductDao.findOne(product.getStockId());
 		// 验证库存总量没变化
 		Assert.assertEquals(Integer.valueOf(stockAmt), resultData.getStockAmt());
 		// 验证占用量没变化
@@ -145,13 +145,13 @@ public class OutwarehouseBoTest {
 		product.setStockAvailabe(stockAmt - initOccupy);
 		storageProductDao.save(product);
 		outwarehouseBo.occupyStock("T00112312", product.getSkuId(), toBeOccupy);
-		StorageProduct resultData = storageProductDao.findById(product.getStockId());
+		StorageProduct resultData = storageProductDao.findOne(product.getStockId());
 		// 验证占用生效：最终占用量 = 初始化占用量 + 新增占用量
 		Assert.assertEquals(Integer.valueOf(initOccupy + toBeOccupy), resultData.getStockOccupy());
 
 		String result = outwarehouseBo.unoccupyStock("T00112312", product.getSkuId(), toBeOccupy);
 		Assert.assertNull(result);
-		resultData = storageProductDao.findById(product.getStockId());
+		resultData = storageProductDao.findOne(product.getStockId());
 		// 验证占用量已减少
 		Assert.assertEquals(Integer.valueOf(initOccupy), resultData.getStockOccupy());
 	}

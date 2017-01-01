@@ -1,30 +1,59 @@
 package com.xabaohui.modules.storage.entity;
 
-import java.sql.Timestamp;
 import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
 
 /**
  * StorageProduct entity. @author MyEclipse Persistence Tools
  */
+@Entity
+@Table(name = "storage_product")
+public class StorageProduct {
 
-public class StorageProduct implements java.io.Serializable {
-
-	// Fields
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -2373349269736459947L;
+	@Id
+	@GeneratedValue
+	@Column(name = "stock_id")
 	private Integer stockId;
+
+	@Column(name = "sku_id")
 	private Integer skuId;
+
+	@Column(name = "subject_id")
 	private Integer subjectId;
+
+	@Column(name = "stock_amt")
 	private Integer stockAmt;
+
+	@Column(name = "stock_occupy")
 	private Integer stockOccupy;
+
+	@Column(name = "stock_availabe")
 	private Integer stockAvailabe;
+
+	@Column(name = "lock_flag")
 	private Boolean lockFlag;
+
+	@Column(name = "lock_reason")
 	private String lockReason;
+
+	@Column(name = "gmt_create", updatable = false)
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date gmtCreate;
+
+	@Column(name = "gmt_modify")
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date gmtModify;
+	
+	@Version
+	@Column(name = "version")
 	private Integer version;
 
 	// Constructors
@@ -34,9 +63,8 @@ public class StorageProduct implements java.io.Serializable {
 	}
 
 	/** full constructor */
-	public StorageProduct(Integer skuId, Integer subjectId, Integer stockAmt,
-			Integer stockOccupy, Integer stockAvailabe, Boolean lockFlag,
-			String lockReason, Timestamp gmtCreate, Timestamp gmtModify,
+	public StorageProduct(Integer skuId, Integer subjectId, Integer stockAmt, Integer stockOccupy,
+			Integer stockAvailabe, Boolean lockFlag, String lockReason, Date gmtCreate, Date gmtModify,
 			Integer version) {
 		this.skuId = skuId;
 		this.subjectId = subjectId;

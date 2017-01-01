@@ -20,8 +20,6 @@ import com.xabaohui.modules.storage.constant.ConstantStorageCheckCheckTime;
 import com.xabaohui.modules.storage.constant.ConstantStorageCheckDiffCheckDiffStatus;
 import com.xabaohui.modules.storage.constant.ConstantStorageCheckPlanStatus;
 import com.xabaohui.modules.storage.constant.ConstantStorageIoDetailIoDetailType;
-import com.xabaohui.modules.storage.dao.StorageCheckDao;
-import com.xabaohui.modules.storage.dao.StorageCheckPlanDao;
 import com.xabaohui.modules.storage.dto.StorageCheckDiffReaultDetail;
 import com.xabaohui.modules.storage.dto.StorageCheckSnapDataDetail;
 import com.xabaohui.modules.storage.entity.StorageCheck;
@@ -30,6 +28,8 @@ import com.xabaohui.modules.storage.entity.StorageCheckDiffAdjust;
 import com.xabaohui.modules.storage.entity.StorageCheckPlan;
 import com.xabaohui.modules.storage.entity.StorageCheckSnap;
 import com.xabaohui.modules.storage.entity.StoragePosStock;
+import com.xabaohui.modules.storage.repository.StorageCheckDao;
+import com.xabaohui.modules.storage.repository.StorageCheckPlanDao;
 
 /**
  * 盘点
@@ -108,7 +108,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 		}
 		StorageCheckPlan checkPlan = null;
 		if (checkPlanId != null) {
-			checkPlan = storageCheckPlanDao.findById(checkPlanId);
+			checkPlan = storageCheckPlanDao.findOne(checkPlanId);
 			if (checkPlan == null) {
 				throw new RuntimeException("所属盘点计划不存在！！");
 			}
@@ -144,7 +144,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 		if (checkId < 0 || checkId == 0) {
 			throw new RuntimeException("盘点Id不能为0或者负数");
 		}
-		StorageCheck storageCheck = storageCheckDao.findById(checkId);
+		StorageCheck storageCheck = storageCheckDao.findOne(checkId);
 		if (storageCheck == null) {
 			throw new RuntimeException("盘点id不存在！！！");
 		}
@@ -186,7 +186,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 		if (StringUtils.isBlank(checkTime)) {
 			throw new RuntimeException("盘点位次不能为空");
 		}
-		StorageCheck storageCheck = storageCheckDao.findById(checkId);
+		StorageCheck storageCheck = storageCheckDao.findOne(checkId);
 		if (storageCheck == null) {
 			throw new RuntimeException("盘点id不存在！！！");
 		}
@@ -215,7 +215,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 			listResult = compareFirstDetail(checkId);
 			// 如果无差异则要解锁库位 complete
 			if (listResult.isEmpty() || listResult == null) {// 无差异
-				StorageCheck check = storageCheckDao.findById(checkId);
+				StorageCheck check = storageCheckDao.findOne(checkId);
 				unLockPosition(check.getUserId(), check.getPositionId());// 解锁库位
 			}
 			return listResult;
@@ -230,7 +230,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 	 * @return listReault差异结果集
 	 */
 	private List<StorageCheckDiffReaultDetail> compareFirstDetail2(int checkId) {
-		StorageCheck storageCheck = storageCheckDao.findById(checkId);
+		StorageCheck storageCheck = storageCheckDao.findOne(checkId);
 		if (storageCheck == null) {
 			throw new RuntimeException("盘点id不存在！！！");
 		}
@@ -301,7 +301,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 	 * @return listReault差异结果集
 	 */
 	private List<StorageCheckDiffReaultDetail> compareFirstDetail(int checkId) {
-		StorageCheck storageCheck = storageCheckDao.findById(checkId);
+		StorageCheck storageCheck = storageCheckDao.findOne(checkId);
 		if (storageCheck == null) {
 			throw new RuntimeException("盘点id不存在！！！");
 		}
@@ -435,7 +435,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 			return;
 		}
 		// 确定了差异,修改盘点结果
-		StorageCheck instance = storageCheckDao.findById(checkId);
+		StorageCheck instance = storageCheckDao.findOne(checkId);
 		if (instance == null) {
 			throw new RuntimeException("盘点不存在");
 		}
@@ -470,7 +470,7 @@ public class CheckStockBoImpl extends WareHouseControlBoImpl implements CheckSto
 		if (checkDiff == null) {
 			throw new RuntimeException("未查到与checkId，skuId对应的盘点差异数据");
 		}
-		int positionId = storageCheckDao.findById(checkId).getPositionId();
+		int positionId = storageCheckDao.findOne(checkId).getPositionId();
 		int amount = realAmount - checkDiff.getStockamount();
 		if (amount < 0) {
 			outwarehouseBo.addOutwarehouseOperate(checkId, skuId, amount, positionId,

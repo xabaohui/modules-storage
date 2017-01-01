@@ -1,27 +1,53 @@
 package com.xabaohui.modules.storage.entity;
 
-import java.sql.Timestamp;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
 
 /**
  * StorageCheckDiffAdjust entity. @author MyEclipse Persistence Tools
  */
+@Entity
+@Table(name = "storage_check_diff_adjust")
+public class StorageCheckDiffAdjust {
 
-public class StorageCheckDiffAdjust implements java.io.Serializable {
-
-	// Fields
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 4598706158675685701L;
+	@Id
+	@GeneratedValue
+	@Column(name = "adjust_id")
 	private Integer adjustId;
+
+	@Column(name = "check_id")
 	private Integer checkId;
+
+	@Column(name = "sku_id")
 	private Integer skuId;
+
+	@Column(name = "adjust_num")
 	private Integer adjustNum;
+
+	@Column(name = "operator")
 	private Integer operator;
-	private Timestamp gmtCreate;
-	private Timestamp gmtModify;
+
+	@Column(name = "gmt_create", length = 32, updatable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtCreate;
+
+	@Column(name = "gmt_modify", length = 32)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtModify;
+
+	@Version
+	@Column(name = "version")
 	private Integer version;
+
+	@Column(name = "memo", length = 512)
 	private String memo;
 
 	// Constructors
@@ -36,10 +62,8 @@ public class StorageCheckDiffAdjust implements java.io.Serializable {
 	}
 
 	/** full constructor */
-	public StorageCheckDiffAdjust(Integer adjustId, Integer checkId,
-			Integer skuId, Integer adjustNum, Integer operator,
-			Timestamp gmtCreate, Timestamp gmtModify, Integer version,
-			String memo) {
+	public StorageCheckDiffAdjust(Integer adjustId, Integer checkId, Integer skuId, Integer adjustNum,
+			Integer operator, Date gmtCreate, Date gmtModify, Integer version, String memo) {
 		this.adjustId = adjustId;
 		this.checkId = checkId;
 		this.skuId = skuId;
@@ -85,7 +109,6 @@ public class StorageCheckDiffAdjust implements java.io.Serializable {
 		this.adjustNum = adjustNum;
 	}
 
-
 	public Integer getOperator() {
 		return operator;
 	}
@@ -94,19 +117,19 @@ public class StorageCheckDiffAdjust implements java.io.Serializable {
 		this.operator = operator;
 	}
 
-	public Timestamp getGmtCreate() {
+	public Date getGmtCreate() {
 		return this.gmtCreate;
 	}
 
-	public void setGmtCreate(Timestamp gmtCreate) {
+	public void setGmtCreate(Date gmtCreate) {
 		this.gmtCreate = gmtCreate;
 	}
 
-	public Timestamp getGmtModify() {
+	public Date getGmtModify() {
 		return this.gmtModify;
 	}
 
-	public void setGmtModify(Timestamp gmtModify) {
+	public void setGmtModify(Date gmtModify) {
 		this.gmtModify = gmtModify;
 	}
 
@@ -125,5 +148,4 @@ public class StorageCheckDiffAdjust implements java.io.Serializable {
 	public void setMemo(String memo) {
 		this.memo = memo;
 	}
-
 }

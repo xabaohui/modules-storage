@@ -1,28 +1,53 @@
 package com.xabaohui.modules.storage.entity;
 
-import java.sql.Timestamp;
 import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
 
 /**
  * StoragePosStock entity. @author MyEclipse Persistence Tools
  */
+@Entity
+@Table(name = "storage_pos_stock")
+public class StoragePosStock {
 
-public class StoragePosStock implements java.io.Serializable {
-
-	// Fields
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -8486704688398731274L;
+	@Id
+	@GeneratedValue
+	@Column(name = "pos_stock_id")
 	private Integer posStockId;
+
+	@Column(name = "position_id")
 	private Integer positionId;
+
+	@Column(name = "sku_id")
 	private Integer skuId;
+
+	@Column(name = "amount")
 	private Integer amount;
+
+	@Column(name = "mark")
 	private String mark;
+
+	@Column(name = "gmt_create", updatable = false)
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date gmtCreate;
+
+	@Column(name = "gmt_modify")
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date gmtModify;
+
+	@Version
+	@Column(name = "version")
 	private Integer version;
+
+	@Column(name = "memo")
 	private String memo;
 
 	// Constructors
@@ -32,9 +57,8 @@ public class StoragePosStock implements java.io.Serializable {
 	}
 
 	/** full constructor */
-	public StoragePosStock(Integer positionId, Integer skuId, Integer amount,
-			String mark, Timestamp gmtCreate, Timestamp gmtModify,
-			Integer version, String memo) {
+	public StoragePosStock(Integer positionId, Integer skuId, Integer amount, String mark, Date gmtCreate,
+			Date gmtModify, Integer version, String memo) {
 		this.positionId = positionId;
 		this.skuId = skuId;
 		this.amount = amount;

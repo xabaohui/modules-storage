@@ -1,25 +1,47 @@
 package com.xabaohui.modules.storage.entity;
 
-import java.sql.Timestamp;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
 
 /**
  * StorageWarehouseInfo entity. @author MyEclipse Persistence Tools
  */
-
-public class StorageWarehouseInfo implements java.io.Serializable {
-
-	// Fields
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+@Entity
+@Table(name = "storage_warehouse_info")
+public class StorageWarehouseInfo {
+	
+	@Id
+	@GeneratedValue
+	@Column(name = "warehouse_id")
 	private Integer warehouseId;
+	
+	@Column(name = "warehouse_name")
 	private String warehouseName;
+	
+	@Column(name = "user_id")
 	private Integer userId;
-	private Timestamp gmtCreate;
-	private Timestamp gmtModify;
+	
+	@Column(name = "gmt_create",updatable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtCreate;
+	
+	@Column(name = "gmt_modify")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtModify;
+	
+	@Version
+	@Column(name = "version")
 	private Integer version;
+	
+	@Column(name = "memo")
 	private String memo;
 
 	// Constructors
@@ -30,7 +52,7 @@ public class StorageWarehouseInfo implements java.io.Serializable {
 
 	/** full constructor */
 	public StorageWarehouseInfo(String warehouseName, Integer userId,
-			Timestamp gmtCreate, Timestamp gmtModify, Integer version,
+			Date gmtCreate, Date gmtModify, Integer version,
 			String memo) {
 		this.warehouseName = warehouseName;
 		this.userId = userId;
@@ -66,19 +88,19 @@ public class StorageWarehouseInfo implements java.io.Serializable {
 		this.userId = userId;
 	}
 
-	public Timestamp getGmtCreate() {
+	public Date getGmtCreate() {
 		return this.gmtCreate;
 	}
 
-	public void setGmtCreate(Timestamp gmtCreate) {
+	public void setGmtCreate(Date gmtCreate) {
 		this.gmtCreate = gmtCreate;
 	}
 
-	public Timestamp getGmtModify() {
+	public Date getGmtModify() {
 		return this.gmtModify;
 	}
 
-	public void setGmtModify(Timestamp gmtModify) {
+	public void setGmtModify(Date gmtModify) {
 		this.gmtModify = gmtModify;
 	}
 

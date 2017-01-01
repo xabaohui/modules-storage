@@ -1,30 +1,56 @@
 package com.xabaohui.modules.storage.entity;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
 
 /**
  * StorageCheckSnap entity. @author MyEclipse Persistence Tools
  */
+@Entity
+@Table(name = "storage_check_snap")
+public class StorageCheckSnap implements Comparable<StorageCheckSnap> {
 
-public class StorageCheckSnap  implements java.io.Serializable,Comparable<StorageCheckSnap>{
-
-	// Fields
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8321156346003770766L;
+	@Id
+	@GeneratedValue
+	@Column(name = "check_snap_id")
 	private Integer checkSnapId;
+
+	@Column(name = "check_id")
 	private Integer checkId;
+
+	@Column(name = "sku_id")
 	private Integer skuId;
+
+	@Column(name = "snap_num")
 	private Integer snapNum;
+
+	@Column(name = "check_time", length = 128)
 	private String checkTime;
+
+	@Column(name = "isdelete")
 	private Boolean isdelete;
-	private Timestamp gmtCreate;
-	private Timestamp gmtModify;
+
+	@Column(name = "gmt_create", length = 32, updatable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtCreate;
+
+	@Column(name = "gmt_modify", length = 32)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date gmtModify;
+
+	@Version
+	@Column(name = "version")
 	private Integer version;
 
 	// Constructors
@@ -34,9 +60,8 @@ public class StorageCheckSnap  implements java.io.Serializable,Comparable<Storag
 	}
 
 	/** full constructor */
-	public StorageCheckSnap(Integer checkId, Integer skuId, Integer snapNum,
-			String checkTime, Boolean isdelete, Timestamp gmtCreate,
-			Timestamp gmtModify, Integer version) {
+	public StorageCheckSnap(Integer checkId, Integer skuId, Integer snapNum, String checkTime, Boolean isdelete,
+			Date gmtCreate, Date gmtModify, Integer version) {
 		this.checkId = checkId;
 		this.skuId = skuId;
 		this.snapNum = snapNum;
@@ -97,19 +122,19 @@ public class StorageCheckSnap  implements java.io.Serializable,Comparable<Storag
 		this.isdelete = isdelete;
 	}
 
-	public Timestamp getGmtCreate() {
+	public Date getGmtCreate() {
 		return this.gmtCreate;
 	}
 
-	public void setGmtCreate(Timestamp gmtCreate) {
+	public void setGmtCreate(Date gmtCreate) {
 		this.gmtCreate = gmtCreate;
 	}
 
-	public Timestamp getGmtModify() {
+	public Date getGmtModify() {
 		return this.gmtModify;
 	}
 
-	public void setGmtModify(Timestamp gmtModify) {
+	public void setGmtModify(Date gmtModify) {
 		this.gmtModify = gmtModify;
 	}
 
@@ -122,38 +147,38 @@ public class StorageCheckSnap  implements java.io.Serializable,Comparable<Storag
 	}
 
 	public boolean equals(StorageCheckSnap obj) {
-		if(this.getSkuId().equals(obj.getSkuId())&&
-				this.getSnapNum().equals(obj.getSnapNum())){
+		if (this.getSkuId().equals(obj.getSkuId()) && this.getSnapNum().equals(obj.getSnapNum())) {
 			return true;
 		}
 		return false;
 	}
 
 	public int compareTo(StorageCheckSnap obj) {
-		if(this.getSkuId()>obj.getSkuId()){
+		if (this.getSkuId() > obj.getSkuId()) {
 			return 1;
 		}
-		if(this.getSkuId()<obj.getSkuId()){
+		if (this.getSkuId() < obj.getSkuId()) {
 			return -1;
 		}
 		return 0;
 	}
+
 	public static void main(String[] args) {
-		StorageCheckSnap snap=new StorageCheckSnap();
+		StorageCheckSnap snap = new StorageCheckSnap();
 		snap.setSkuId(10002);
 		snap.setSnapNum(10);
-		StorageCheckSnap snap2=new StorageCheckSnap();
+		StorageCheckSnap snap2 = new StorageCheckSnap();
 		snap2.setSkuId(10002);
 		snap2.setSnapNum(10);
 		System.out.println(snap.equals(snap2));
-		List<StorageCheckSnap> list=new ArrayList<StorageCheckSnap>();
+		List<StorageCheckSnap> list = new ArrayList<StorageCheckSnap>();
 		list.add(snap2);
 		list.add(snap);
-		 for (StorageCheckSnap storageCheckSnap : list) {
-				System.out.println(storageCheckSnap.getSkuId());
-			}
-		 Collections.sort(list);
-		 for (StorageCheckSnap storageCheckSnap : list) {
+		for (StorageCheckSnap storageCheckSnap : list) {
+			System.out.println(storageCheckSnap.getSkuId());
+		}
+		Collections.sort(list);
+		for (StorageCheckSnap storageCheckSnap : list) {
 			System.out.println(storageCheckSnap.getSkuId());
 		}
 	}

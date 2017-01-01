@@ -1,6 +1,5 @@
 package com.xabaohui.modules.storage.entity;
 
-import java.sql.Timestamp;
 import java.util.Date;
 
 import javax.persistence.Column;

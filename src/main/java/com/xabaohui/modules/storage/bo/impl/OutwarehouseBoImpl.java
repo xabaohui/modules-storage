@@ -96,7 +96,7 @@ public class OutwarehouseBoImpl extends WareHouseControlBoImpl implements Outwar
 	 */
 	@Transactional
 	public List<StorageIoDetail> outwarehouseForSku(Integer taskId, Integer skuId, Integer amount) {
-		List<StoragePosStock> listPosStocks = this.findBySkuIdOrderByPositionIdAndAmount(skuId);// 查询指定SKUID库存明细
+		List<StoragePosStock> listPosStocks = this.findBySkuIdOrderByAmount(skuId);// 查询指定SKUID库存明细
 		if (listPosStocks == null || listPosStocks.isEmpty()) {
 			throw new StockNotEnoughException("当前商品无库存明细！！！");
 		}
