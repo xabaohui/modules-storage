@@ -1,37 +1,36 @@
 package com.xabaohui.modules.storage.repository;
 
 import java.util.Date;
+import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.xabaohui.modules.storage.BaseTestUnit;
-import com.xabaohui.modules.storage.entity.StorageWarehouseInfo;
+import com.xabaohui.modules.storage.entity.StorageRepoInfo;
 
 public class StorageWarehouseInfoDaoTest extends BaseTestUnit {
 
 	@Autowired
-	StorageWarehouseInfoDao dao;
+	StorageRepoInfoDao dao;
 
 	@Test
-	public void test() {
-		StorageWarehouseInfo s = getStorageWarehouseInfo();
+	public void testSave() {
+		StorageRepoInfo s = getStorageWarehouseInfo();
 		dao.save(s);
 
-		StorageWarehouseInfo s1 = dao.findOne(s.getWarehouseId());
-
+		StorageRepoInfo s1 = dao.findOne(s.getRepoId());
 		Assert.assertNotNull(s1);
-		Assert.assertEquals(s.getWarehouseName(), s.getWarehouseName());
 	}
 
-	private StorageWarehouseInfo getStorageWarehouseInfo() {
-		StorageWarehouseInfo s = new StorageWarehouseInfo();
+	private StorageRepoInfo getStorageWarehouseInfo() {
+		StorageRepoInfo s = new StorageRepoInfo();
+		s.setName("testRepo-" + new Random().nextInt());
+		s.setOwnerId(1);
+		s.setStatus(StorageRepoInfo.Status.AVAILABLE.getValue());
 		s.setGmtCreate(new Date());
 		s.setGmtModify(new Date());
-		s.setMemo("1231221");
-		s.setUserId(13111);
-		s.setWarehouseName("asd3awwdawdw");
 		return s;
 	}
 }

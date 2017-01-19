@@ -14,7 +14,7 @@ import com.xabaohui.modules.storage.constant.ConstantStorageIoTaskBizType;
 import com.xabaohui.modules.storage.constant.ConstantStorageIoTaskStatus;
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
 import com.xabaohui.modules.storage.entity.StorageIoDetail.IoType;
-import com.xabaohui.modules.storage.entity.StorageIoTask;
+import com.xabaohui.modules.storage.entity.StorageIoBatch;
 import com.xabaohui.modules.storage.entity.StoragePosStock;
 import com.xabaohui.modules.storage.entity.StoragePosition;
 import com.xabaohui.modules.storage.entity.StorageProduct;
@@ -40,7 +40,7 @@ public class InwarehouseBoImpl extends WareHouseControlBoImpl implements Inwareh
 	 * @param listDetails
 	 * @return
 	 */
-	public List<StorageIoDetail> addListInwarehouseOperate(StorageIoTask storageIoTask,
+	public List<StorageIoDetail> addListInwarehouseOperate(StorageIoBatch storageIoTask,
 			List<StorageIoDetail> listDetails) {
 		if (storageIoTask == null) {
 			throw new RuntimeException("库存变动单不存在,不能入库");
@@ -222,8 +222,8 @@ public class InwarehouseBoImpl extends WareHouseControlBoImpl implements Inwareh
 	 *            <入库，出库，调整>
 	 * @return
 	 */
-	public StorageIoTask addStorageIoTask(String outTradeNo, Integer operator, Integer amount, String memo, String operateType) {
-		StorageIoTask storageIoTask = processGetIoTask(outTradeNo, operator, amount, memo);
+	public StorageIoBatch addStorageIoTask(String outTradeNo, Integer operator, Integer amount, String memo, String operateType) {
+		StorageIoBatch storageIoTask = processGetIoTask(outTradeNo, operator, amount, memo);
 		String statusString = "";
 		if (operateType.equals(ConstantStorageIoTaskBizType.IN_WAREHOUSE)) {
 			statusString = ConstantStorageIoTaskStatus.IN_WAREHOUSE_ING;// 正在入库
@@ -268,7 +268,7 @@ public class InwarehouseBoImpl extends WareHouseControlBoImpl implements Inwareh
 	 * @param taskId
 	 * @param totalAmount
 	 */
-	public void updateStorageIoTaskToComplete(StorageIoTask storageIoTask, Integer disAmount) {
+	public void updateStorageIoTaskToComplete(StorageIoBatch storageIoTask, Integer disAmount) {
 		storageIoTask.setStatus(ConstantStorageIoTaskStatus.COMPLETE);
 		storageIoTask.setAmount(storageIoTask.getAmount() + disAmount);
 		updateStorageIoTask(storageIoTask);

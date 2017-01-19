@@ -2,106 +2,85 @@ package com.xabaohui.modules.storage.repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.xabaohui.modules.storage.BaseTestUnit;
+import com.xabaohui.modules.storage.dto.StockDTO;
 import com.xabaohui.modules.storage.entity.StoragePosStock;
+import com.xabaohui.modules.storage.entity.StoragePosition;
+import com.xabaohui.modules.storage.entity.StoragePosition.PosStatus;
+import com.xabaohui.modules.storage.entity.StorageProduct;
 
 public class StoragePosStockDaoTest extends BaseTestUnit {
 
 	@Autowired
-	StoragePosStockDao dao;
+	StoragePosStockDao stockDao;
+	@Autowired
+	StoragePositionDao posDao;
+	@Autowired
+	StorageProductDao prodDao;
 
 	@Test
-	public void test() {
-		StoragePosStock s = getStoragePosStock();
-		dao.save(s);
-
-		List<StoragePosStock> list = dao.findBySkuIdOrderByPositionIdAndAmount(s.getSkuId());
+	public void testFindByPosId() {
+		StoragePosStock s = buildStoragePosStock();
+		stockDao.save(s);
 		
+		List<StoragePosStock> list = stockDao.findByPosId(s.getPosId());
 		Assert.assertFalse(list.isEmpty());
-		for (StoragePosStock s1 : list) {
-			Assert.assertEquals(s.getPosStockId(), s1.getPosStockId());
-		}
 	}
 
 	@Test
-	public void test1() {
-		StoragePosStock s = getStoragePosStock();
-		s.setSkuId(1223444);
-		s.setAmount(0);
-		dao.save(s);
+	public void testFindAvailableStock() {
+		StoragePosition pos = buildPosition();
+		pos = posDao.save(pos);
+		StorageProduct prod = buildStorageProduct();
+		prod = prodDao.save(prod);
+		StoragePosStock stock = buildStoragePosStock();
+		stock.setPosId(pos.getPosId());
 		
-		List<StoragePosStock> list = dao.findBySkuIdOrderByPositionIdAndAmount(s.getSkuId());
-		
-		Assert.assertFalse(!list.isEmpty());
+		List<StockDTO> stockDTO = stockDao.findAvailableStock(prod.getProductId());
+		Assert.assertNotNull(stockDTO);
 	}
 
-	@Test
-	public void test2() {
-		StoragePosStock s = getStoragePosStock();
-		s.setPositionId(765932);
-		dao.save(s);
-		
-		List<StoragePosStock> list1 = dao.findStoragePosStockByPositionId(s.getPositionId());
-		
-		Assert.assertFalse(list1.isEmpty());
-		for (StoragePosStock s1 : list1) {
-			Assert.assertEquals(s.getPosStockId(), s1.getPosStockId());
-		}
-	}
-
-	@Test
-	public void test3() {
-		StoragePosStock s = getStoragePosStock();
-		s.setAmount(0);
-		s.setPositionId(10069773);
-		dao.save(s);
-		
-		List<StoragePosStock> list1 = dao.findStoragePosStockByPositionId(s.getPositionId());
-		
-		Assert.assertFalse(!list1.isEmpty());
-	}
-
-	@Test
-	public void test4() {
-		StoragePosStock s = getStoragePosStock();
-		s.setPositionId(445566767);
-		s.setSkuId(223677);
-		dao.save(s);
-		
-		List<StoragePosStock> list2 = dao.findStoragePosStockBySkuIdAndPositionId(s.getSkuId(), s.getPositionId());
-		
-		Assert.assertFalse(list2.isEmpty());
-		for (StoragePosStock s1 : list2) {
-			Assert.assertEquals(s.getPosStockId(), s1.getPosStockId());
-		}
-	}
-
-	@Test
-	public void test5() {
-		StoragePosStock s = getStoragePosStock();
-		s.setAmount(0);
-		s.setPositionId(23668900);
-		s.setSkuId(983756);
-		dao.save(s);
-		
-		List<StoragePosStock> list2 = dao.findStoragePosStockBySkuIdAndPositionId(s.getSkuId(), s.getPositionId());
-		
-		Assert.assertFalse(!list2.isEmpty());
-	}
-
-	private StoragePosStock getStoragePosStock() {
+	private StoragePosStock buildStoragePosStock() {
 		StoragePosStock s = new StoragePosStock();
-		s.setAmount(13123);
+		s.setTotalAmt(100);
+		s.setOccupyAmt(0);
+		s.setPosId(new Random().nextInt(100000));
+		s.setProductId(1);
 		s.setGmtCreate(new Date());
 		s.setGmtModify(new Date());
-		s.setMark("123123");
-		s.setPositionId(232323);
-		s.setSkuId(1232323);
+		return s;
+	}
+	
+	private StoragePosition buildPosition() {
+		StoragePosition pos = new StoragePosition();
+		pos.setLabel("L" + new Random().nextInt(100000));
+		pos.setRepoId(1);
+		pos.setPosStatus(PosStatus.AVAILABLE.getValue());
+		pos.setGmtCreate(new Date());
+		pos.setGmtModify(new Date());
+		return pos;
+	}
+	
+	private StorageProduct buildStorageProduct() {
+		StorageProduct s = new StorageProduct();
+		s.setGmtCreate(new Date());
+		s.setGmtModify(new Date());
+		s.setLockFlag(false);
+		s.setLockReason("sdsdsdsd");
+		s.setSkuId(new Random().nextInt());
+		s.setSkuName("testSku");
+		s.setRepoId(1);
+		s.setStockAmt(23333);
+		s.setStockAvailable(131312);
+		s.setStockOccupy(13131);
+		s.setSubjectId(2111113);
+		s.setSubjectName("subject");
 		return s;
 	}
 }

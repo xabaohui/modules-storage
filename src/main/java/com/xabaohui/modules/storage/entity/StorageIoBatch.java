@@ -12,27 +12,30 @@ import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
 /**
- * StorageIoTask entity. @author MyEclipse Persistence Tools
+ * 库存变动批次表
  */
 @Entity
-@Table(name = "storage_invoice")
-public class StorageIoTask {
+@Table(name = "storage_io_batch")
+public class StorageIoBatch {
 
 	@Id
 	@GeneratedValue
-	@Column(name = "invoice_id")
-	private Integer taskId;
+	@Column(name = "batch_id")
+	private Integer batchId;
 
-	@Column(name = "out_trade_no", length = 64, nullable = false, updatable = false)
-	private String outTradeNo;
+	@Column(name = "repo_id", nullable = false)
+	private Integer repoId;
 
-	@Column(name = "user_id")
-	private Integer userId;
+	@Column(name = "memo", nullable = false)
+	private String memo;
+
+	@Column(name = "operator", nullable = false)
+	private Integer operator;
 
 	@Column(name = "biz_type", nullable = false)
 	private String bizType;
 
-	@Column(name = "amount", nullable = false)
+	@Column(name = "amount")
 	private Integer amount;
 
 	@Column(name = "status", nullable = false)
@@ -46,41 +49,38 @@ public class StorageIoTask {
 	@Column(name = "gmt_modify", nullable = false)
 	private Date gmtModify;
 
-	@Column(name = "memo")
-	private String memo;
-
 	@Version
 	@Column(name = "version")
 	private Integer version;
 
 	// Property accessors
 
-	public Integer getTaskId() {
-		return this.taskId;
-	}
-
-	public void setTaskId(Integer taskId) {
-		this.taskId = taskId;
-	}
-
-	public String getOutTradeNo() {
-		return outTradeNo;
-	}
-
-	public void setOutTradeNo(String outTradeNo) {
-		this.outTradeNo = outTradeNo;
-	}
-
-	public Integer getUserId() {
-		return this.userId;
-	}
-
-	public void setUserId(Integer userId) {
-		this.userId = userId;
-	}
-
 	public String getBizType() {
 		return this.bizType;
+	}
+
+	public Integer getBatchId() {
+		return batchId;
+	}
+
+	public void setBatchId(Integer batchId) {
+		this.batchId = batchId;
+	}
+
+	public Integer getRepoId() {
+		return repoId;
+	}
+
+	public void setRepoId(Integer repoId) {
+		this.repoId = repoId;
+	}
+
+	public Integer getOperator() {
+		return operator;
+	}
+
+	public void setOperator(Integer operator) {
+		this.operator = operator;
 	}
 
 	public void setBizType(String bizType) {
@@ -136,13 +136,15 @@ public class StorageIoTask {
 	}
 
 	/**
-	 * 单据业务类型
+	 * 业务类型
+	 * 
 	 * @author yz
-	 *
+	 * 
 	 */
 	public enum BizType {
-		ORDER("order", "订单出库");
-		
+
+		IN_BATCH("in_batch", "批量入库"), IN_DAILY("in_daily", "日常入库"), OUT_BATCH("out_batch", "批量出库");
+
 		private String value;
 		private String display;
 
@@ -161,18 +163,18 @@ public class StorageIoTask {
 	}
 
 	/**
-	 * 单据状态
+	 * 状态
+	 * 
 	 * @author yz
-	 *
+	 * 
 	 */
-	public enum InvoiceStatus {
-		CREATED("created", "已创建"), MATCHED("matched", "已匹配库位"), PRINTED("printed", "已打印"), FINISH("finish", "已完成"), CANCEL(
-				"cancel", "已取消");
+	public enum Status {
+		CREATED("created", "已创建"), FINISH("finish", "已完成"), CANCEL("cancel", "已取消");
 
 		private String value;
 		private String display;
 
-		private InvoiceStatus(String value, String display) {
+		private Status(String value, String display) {
 			this.value = value;
 			this.display = display;
 		}

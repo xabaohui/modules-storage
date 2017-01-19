@@ -10,7 +10,7 @@ import com.xabaohui.modules.storage.entity.StorageIoDetail;
 public interface StorageIoDetailDao extends CrudRepository<StorageIoDetail, Integer>,
 		JpaSpecificationExecutor<StorageIoDetail> {
 
-	List<StorageIoDetail> findByTaskId(Integer taskId);
+	List<StorageIoDetail> findByBatchId(Integer batchId);
 	
-	List<StorageIoDetail> findByTaskIdAndSkuIdAndPositionId(Integer taskId, Integer skuId, Integer positionId);
+	List<StorageIoDetail> findByBatchIdAndSkuIdAndPosId(Integer batchId, Integer skuId, Integer posId);
 }

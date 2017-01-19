@@ -12,7 +12,7 @@ import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
 /**
- * StorageIoDetail entity. @author MyEclipse Persistence Tools
+ * 库存变动明细表
  */
 @Entity
 @Table(name = "storage_io_detail")
@@ -24,24 +24,36 @@ public class StorageIoDetail {
 	@Column(name = "detail_id")
 	private Integer detailId;
 
-	@Column(name = "task_id", nullable = false, updatable = false)
-	private Integer taskId;
+	@Column(name = "batch_id")
+	private Integer batchId;
 
-	@Column(name = "position_id", nullable = false, updatable = false)
-	private Integer positionId;
+	@Column(name = "repo_id", nullable = false, updatable = false)
+	private Integer repoId;
+
+	@Column(name = "order_id")
+	private Integer orderId;
+
+	@Column(name = "pos_id", nullable = false, updatable = false)
+	private Integer posId;
+	
+	@Column(name = "pos_label", nullable = false, updatable = false)
+	private String posLabel;
 
 	@Column(name = "sku_id", nullable = false, updatable = false)
 	private Integer skuId;
-	
+
 	@Column(name = "amount", nullable = false)
 	private Integer amount;
-	
+
+	@Column(name = "operator", nullable = false)
+	private Integer operator;
+
 	@Column(name = "io_detail_type", nullable = false)
 	private String ioDetailType;
-	
-	@Column(name = "memo")
-	private String memo;
-	
+
+	@Column(name = "detail_status", nullable = false)
+	private String detailStatus;
+
 	@Column(name = "gmt_create", updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date gmtCreate;
@@ -49,7 +61,7 @@ public class StorageIoDetail {
 	@Column(name = "gmt_modify")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date gmtModify;
-	
+
 	@Version
 	@Column(name = "version")
 	private Integer version;
@@ -58,6 +70,54 @@ public class StorageIoDetail {
 
 	public Integer getDetailId() {
 		return this.detailId;
+	}
+
+	public Integer getBatchId() {
+		return batchId;
+	}
+
+	public void setBatchId(Integer batchId) {
+		this.batchId = batchId;
+	}
+
+	public Integer getRepoId() {
+		return repoId;
+	}
+
+	public void setRepoId(Integer repoId) {
+		this.repoId = repoId;
+	}
+
+	public Integer getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(Integer orderId) {
+		this.orderId = orderId;
+	}
+
+	public Integer getPosId() {
+		return posId;
+	}
+
+	public void setPosId(Integer posId) {
+		this.posId = posId;
+	}
+	
+	public String getPosLabel() {
+		return posLabel;
+	}
+
+	public void setPosLabel(String posLabel) {
+		this.posLabel = posLabel;
+	}
+
+	public Integer getOperator() {
+		return operator;
+	}
+
+	public void setOperator(Integer operator) {
+		this.operator = operator;
 	}
 
 	public String getIoDetailType() {
@@ -70,22 +130,6 @@ public class StorageIoDetail {
 
 	public void setDetailId(Integer detailId) {
 		this.detailId = detailId;
-	}
-
-	public Integer getTaskId() {
-		return this.taskId;
-	}
-
-	public void setTaskId(Integer taskId) {
-		this.taskId = taskId;
-	}
-
-	public Integer getPositionId() {
-		return this.positionId;
-	}
-
-	public void setPositionId(Integer positionId) {
-		this.positionId = positionId;
 	}
 
 	public Integer getSkuId() {
@@ -104,12 +148,12 @@ public class StorageIoDetail {
 		this.amount = amount;
 	}
 
-	public String getMemo() {
-		return this.memo;
+	public String getDetailStatus() {
+		return detailStatus;
 	}
 
-	public void setMemo(String memo) {
-		this.memo = memo;
+	public void setDetailStatus(String detailStatus) {
+		this.detailStatus = detailStatus;
 	}
 
 	public Date getGmtCreate() {
@@ -149,6 +193,29 @@ public class StorageIoDetail {
 		private String display;
 
 		private IoType(String value, String display) {
+			this.value = value;
+			this.display = display;
+		}
+
+		public String getValue() {
+			return value;
+		}
+
+		public String getDisplay() {
+			return display;
+		}
+	}
+	
+	public enum DetailStatus {
+		PREPARING("preparing", "配货中"), 
+		SENT("sent", "已出库"), 
+		LACKNESS("lackness", "缺货"), 
+		CANCEL("cancel", "已取消");
+		
+		private String value;
+		private String display;
+
+		private DetailStatus(String value, String display) {
 			this.value = value;
 			this.display = display;
 		}

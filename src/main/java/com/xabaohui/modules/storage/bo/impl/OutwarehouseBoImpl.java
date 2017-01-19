@@ -19,7 +19,7 @@ import com.xabaohui.modules.storage.dto.DistrBatchOutOfStockResponseDetail;
 import com.xabaohui.modules.storage.dto.StorageCheckDiffReaultDetail;
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
 import com.xabaohui.modules.storage.entity.StorageIoDetail.IoType;
-import com.xabaohui.modules.storage.entity.StorageIoTask;
+import com.xabaohui.modules.storage.entity.StorageIoBatch;
 import com.xabaohui.modules.storage.entity.StoragePosStock;
 import com.xabaohui.modules.storage.entity.StoragePosition;
 import com.xabaohui.modules.storage.entity.StorageProduct;
@@ -50,7 +50,7 @@ public class OutwarehouseBoImpl extends WareHouseControlBoImpl implements Outwar
 	 * @param listResponseDetails
 	 *            (出库单明细细)
 	 */
-	public void addOutwarehouseOperate(StorageIoTask task, List<StorageIoDetail> listStorageIoDetails) {
+	public void addOutwarehouseOperate(StorageIoBatch task, List<StorageIoDetail> listStorageIoDetails) {
 		if (listStorageIoDetails == null || listStorageIoDetails.isEmpty()) {
 			throw new RuntimeException("出库明细单不能为空！！");
 		}
@@ -224,7 +224,7 @@ public class OutwarehouseBoImpl extends WareHouseControlBoImpl implements Outwar
 		if (taskId == null || taskId <= 0) {
 			throw new RuntimeException("重配请求流水号不能为0或者负数！！！");
 		}
-		StorageIoTask storageIoTask = storageIoTaskDao.findOne(taskId);
+		StorageIoBatch storageIoTask = storageIoTaskDao.findOne(taskId);
 		if (storageIoTask == null) {
 			throw new RuntimeException("配货流水不存在！！！");
 		}

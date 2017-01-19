@@ -12,7 +12,7 @@ import com.xabaohui.modules.storage.dto.StorageInwarehouseDataDetail;
 import com.xabaohui.modules.storage.entity.StorageCheck;
 import com.xabaohui.modules.storage.entity.StorageCheckPlan;
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
-import com.xabaohui.modules.storage.entity.StorageIoTask;
+import com.xabaohui.modules.storage.entity.StorageIoBatch;
 
 /**
  * 配货接口
@@ -80,7 +80,7 @@ public interface StorageOperaterService {
 	 * @param operateType
 	 * @return
 	 */
-	StorageIoTask createStorageIoTask(String outTradeNo, Integer operator, String memo, String operateType);
+	StorageIoBatch createStorageIoTask(String outTradeNo, Integer operator, String memo, String operateType);
 
 	/**
 	 * 列表入库

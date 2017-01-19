@@ -15,7 +15,7 @@ import com.xabaohui.modules.storage.entity.StorageCheckPlan;
 import com.xabaohui.modules.storage.entity.StorageCheckSnap;
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
 import com.xabaohui.modules.storage.entity.StorageIoDetail.IoType;
-import com.xabaohui.modules.storage.entity.StorageIoTask;
+import com.xabaohui.modules.storage.entity.StorageIoBatch;
 import com.xabaohui.modules.storage.entity.StoragePosStock;
 import com.xabaohui.modules.storage.entity.StoragePosition;
 import com.xabaohui.modules.storage.entity.StorageProduct;
@@ -26,7 +26,7 @@ import com.xabaohui.modules.storage.repository.StorageCheckDiffDao;
 import com.xabaohui.modules.storage.repository.StorageCheckPlanDao;
 import com.xabaohui.modules.storage.repository.StorageCheckSnapDao;
 import com.xabaohui.modules.storage.repository.StorageIoDetailDao;
-import com.xabaohui.modules.storage.repository.StorageIoTaskDao;
+import com.xabaohui.modules.storage.repository.StorageIoBatchDao;
 import com.xabaohui.modules.storage.repository.StoragePosStockDao;
 import com.xabaohui.modules.storage.repository.StoragePositionDao;
 import com.xabaohui.modules.storage.repository.StorageProductDao;
@@ -35,7 +35,7 @@ public abstract class WareHouseControlBoImpl {
 	@Resource
 	protected StoragePositionDao storagePositionDao;
 	@Resource
-	protected StorageIoTaskDao storageIoTaskDao;
+	protected StorageIoBatchDao storageIoTaskDao;
 	@Resource
 	protected StorageIoDetailDao storageIoDetailDao;
 	@Resource
@@ -191,8 +191,8 @@ public abstract class WareHouseControlBoImpl {
 		// updateStoragePosStock(storagePosStock);
 	}
 
-	protected StorageIoTask processGetIoTask(String outTradeNo, Integer operator, Integer amount, String memo) {
-		StorageIoTask storageIoTask = new StorageIoTask();
+	protected StorageIoBatch processGetIoTask(String outTradeNo, Integer operator, Integer amount, String memo) {
+		StorageIoBatch storageIoTask = new StorageIoBatch();
 		storageIoTask.setOutTradeNo(outTradeNo);
 		storageIoTask.setUserId(operator);
 		storageIoTask.setAmount(amount);
@@ -361,8 +361,8 @@ public abstract class WareHouseControlBoImpl {
 		}
 	}
 
-	protected StorageIoTask processFindIoTaskInstance(Integer taskId) {
-		StorageIoTask storageIoTask = storageIoTaskDao.findOne(taskId);
+	protected StorageIoBatch processFindIoTaskInstance(Integer taskId) {
+		StorageIoBatch storageIoTask = storageIoTaskDao.findOne(taskId);
 		if (storageIoTask == null) {
 			throw new RuntimeException("没有指定的库存变动操作");
 		}
@@ -440,7 +440,7 @@ public abstract class WareHouseControlBoImpl {
 		return list.get(0);
 	}
 
-	protected void updateStorageIoTask(StorageIoTask task) {
+	protected void updateStorageIoTask(StorageIoBatch task) {
 		task.setGmtModify(nowTime());
 		storageIoTaskDao.save(task);
 	}
@@ -490,7 +490,7 @@ public abstract class WareHouseControlBoImpl {
 		storageProductDao.save(storageProduct);
 	}
 
-	protected StorageIoTask saveStorageIoTask(StorageIoTask storageIoTask) {
+	protected StorageIoBatch saveStorageIoTask(StorageIoBatch storageIoTask) {
 		storageIoTask.setGmtCreate(nowTime());
 		storageIoTask.setGmtModify(nowTime());
 		storageIoTask.setVersion(0);

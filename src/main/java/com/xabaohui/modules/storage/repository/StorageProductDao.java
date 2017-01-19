@@ -8,5 +8,5 @@ import com.xabaohui.modules.storage.entity.StorageProduct;
 
 public interface StorageProductDao extends JpaRepository<StorageProduct, Integer>{
 	
-	List<StorageProduct> findBySkuId(Integer skuId);
+	List<StorageProduct> findBySkuIdAndRepoId(Integer skuId, Integer repoId);
 }

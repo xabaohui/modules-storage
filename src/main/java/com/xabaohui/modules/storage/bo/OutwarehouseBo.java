@@ -6,7 +6,7 @@ import com.xabaohui.modules.storage.dto.DistrBatchOutOfStockRequestDTO;
 import com.xabaohui.modules.storage.dto.DistrBatchOutOfStockResponseDTO;
 import com.xabaohui.modules.storage.dto.DistrBatchOutOfStockResponseDetail;
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
-import com.xabaohui.modules.storage.entity.StorageIoTask;
+import com.xabaohui.modules.storage.entity.StorageIoBatch;
 
 public interface OutwarehouseBo {
 
@@ -17,7 +17,7 @@ public interface OutwarehouseBo {
 	 * @param listResponseDetails
 	 *            (出库单明细)
 	 */
-	void addOutwarehouseOperate(StorageIoTask task, List<StorageIoDetail> listStorageIoDetails);
+	void addOutwarehouseOperate(StorageIoBatch task, List<StorageIoDetail> listStorageIoDetails);
 
 	/**
 	 * 执行出库操作<根据skuId+amount>

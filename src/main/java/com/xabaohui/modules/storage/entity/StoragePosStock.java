@@ -12,7 +12,7 @@ import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
 /**
- * StoragePosStock entity. @author MyEclipse Persistence Tools
+ * 库位库存
  */
 @Entity
 @Table(name = "storage_pos_stock")
@@ -20,20 +20,20 @@ public class StoragePosStock {
 
 	@Id
 	@GeneratedValue
-	@Column(name = "pos_stock_id")
-	private Integer posStockId;
+	@Column(name = "stock_id")
+	private Integer stockId;
 
-	@Column(name = "position_id")
-	private Integer positionId;
+	@Column(name = "pos_id")
+	private Integer posId;
 
-	@Column(name = "sku_id")
-	private Integer skuId;
+	@Column(name = "product_id")
+	private Integer productId;
 
-	@Column(name = "amount")
-	private Integer amount;
+	@Column(name = "total_amt")
+	private Integer totalAmt;
 
-	@Column(name = "mark")
-	private String mark;
+	@Column(name = "occupy_amt")
+	private Integer occupyAmt;
 
 	@Column(name = "gmt_create", updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
@@ -47,68 +47,52 @@ public class StoragePosStock {
 	@Column(name = "version")
 	private Integer version;
 
-	@Column(name = "memo")
-	private String memo;
-
 	// Constructors
 
 	/** default constructor */
 	public StoragePosStock() {
 	}
-
-	/** full constructor */
-	public StoragePosStock(Integer positionId, Integer skuId, Integer amount, String mark, Date gmtCreate,
-			Date gmtModify, Integer version, String memo) {
-		this.positionId = positionId;
-		this.skuId = skuId;
-		this.amount = amount;
-		this.mark = mark;
-		this.gmtCreate = gmtCreate;
-		this.gmtModify = gmtModify;
-		this.version = version;
-		this.memo = memo;
-	}
-
+	
 	// Property accessors
 
-	public Integer getPosStockId() {
-		return this.posStockId;
+	public Integer getProductId() {
+		return productId;
 	}
 
-	public void setPosStockId(Integer posStockId) {
-		this.posStockId = posStockId;
+	public Integer getStockId() {
+		return stockId;
 	}
 
-	public Integer getPositionId() {
-		return this.positionId;
+	public void setStockId(Integer stockId) {
+		this.stockId = stockId;
 	}
 
-	public void setPositionId(Integer positionId) {
-		this.positionId = positionId;
+	public Integer getPosId() {
+		return posId;
 	}
 
-	public Integer getSkuId() {
-		return this.skuId;
+	public void setPosId(Integer posId) {
+		this.posId = posId;
 	}
 
-	public void setSkuId(Integer skuId) {
-		this.skuId = skuId;
+	public Integer getTotalAmt() {
+		return totalAmt;
 	}
 
-	public Integer getAmount() {
-		return this.amount;
+	public void setTotalAmt(Integer totalAmt) {
+		this.totalAmt = totalAmt;
 	}
 
-	public void setAmount(Integer amount) {
-		this.amount = amount;
+	public Integer getOccupyAmt() {
+		return occupyAmt;
 	}
 
-	public String getMark() {
-		return this.mark;
+	public void setOccupyAmt(Integer occupyAmt) {
+		this.occupyAmt = occupyAmt;
 	}
 
-	public void setMark(String mark) {
-		this.mark = mark;
+	public void setProductId(Integer productId) {
+		this.productId = productId;
 	}
 
 	public Date getGmtCreate() {
@@ -134,13 +118,4 @@ public class StoragePosStock {
 	public void setVersion(Integer version) {
 		this.version = version;
 	}
-
-	public String getMemo() {
-		return this.memo;
-	}
-
-	public void setMemo(String memo) {
-		this.memo = memo;
-	}
-
 }

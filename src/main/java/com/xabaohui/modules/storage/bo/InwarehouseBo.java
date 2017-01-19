@@ -3,7 +3,7 @@ package com.xabaohui.modules.storage.bo;
 import java.util.List;
 
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
-import com.xabaohui.modules.storage.entity.StorageIoTask;
+import com.xabaohui.modules.storage.entity.StorageIoBatch;
 import com.xabaohui.modules.storage.entity.StoragePosition;
 
 public interface InwarehouseBo {
@@ -16,7 +16,7 @@ public interface InwarehouseBo {
 	 * @param listDetails
 	 * @return
 	 */
-	List<StorageIoDetail> addListInwarehouseOperate(StorageIoTask storageIoTask, List<StorageIoDetail> listDetails);
+	List<StorageIoDetail> addListInwarehouseOperate(StorageIoBatch storageIoTask, List<StorageIoDetail> listDetails);
 
 	/**
 	 * 单个入库
@@ -57,7 +57,7 @@ public interface InwarehouseBo {
 	 * @param operateType
 	 * @return
 	 */
-	StorageIoTask addStorageIoTask(String outTradeNo, Integer operator, Integer amount, String memo, String operateType);
+	StorageIoBatch addStorageIoTask(String outTradeNo, Integer operator, Integer amount, String memo, String operateType);
 
 	/**
 	 * 添加库位信息
@@ -74,5 +74,5 @@ public interface InwarehouseBo {
 	 * @param taskId
 	 * @param totalAmount
 	 */
-	void updateStorageIoTaskToComplete(StorageIoTask storageIoTask, Integer amount);
+	void updateStorageIoTaskToComplete(StorageIoBatch storageIoTask, Integer amount);
 }

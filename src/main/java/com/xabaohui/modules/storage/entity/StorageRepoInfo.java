@@ -12,32 +12,25 @@ import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
 /**
- * 库位
- * 
- * @author yz
- * 
+ * 仓库信息
  */
 @Entity
-@Table(name = "storage_position")
-public class StoragePosition {
+@Table(name = "storage_repo_info")
+public class StorageRepoInfo {
 
-	// Fields
 	@Id
 	@GeneratedValue
-	@Column(name = "pos_id")
-	private Integer posId;
-
-	@Column(name = "repo_id", nullable = false, updatable = false)
+	@Column(name = "repo_id")
 	private Integer repoId;
 
-	@Column(name = "label", nullable = false)
-	private String label;
+	@Column(name = "name")
+	private String name;
 
-	@Column(name = "pos_status")
-	private String posStatus;
+	@Column(name = "owner_id")
+	private Integer ownerId;
 
-	@Column(name = "lock_reason")
-	private String lockReason;
+	@Column(name = "status")
+	private String status;
 
 	@Column(name = "gmt_create", updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
@@ -51,18 +44,10 @@ public class StoragePosition {
 	@Column(name = "version")
 	private Integer version;
 
-	// Property accessors
+	// Constructors
 
-	public String getLockReason() {
-		return this.lockReason;
-	}
-
-	public Integer getPosId() {
-		return posId;
-	}
-
-	public void setPosId(Integer posId) {
-		this.posId = posId;
+	/** default constructor */
+	public StorageRepoInfo() {
 	}
 
 	public Integer getRepoId() {
@@ -73,24 +58,28 @@ public class StoragePosition {
 		this.repoId = repoId;
 	}
 
-	public void setLockReason(String lockReason) {
-		this.lockReason = lockReason;
+	public String getName() {
+		return name;
 	}
 
-	public String getLabel() {
-		return label;
+	public void setName(String name) {
+		this.name = name;
 	}
 
-	public void setLabel(String label) {
-		this.label = label;
+	public Integer getOwnerId() {
+		return ownerId;
 	}
 
-	public String getPosStatus() {
-		return posStatus;
+	public void setOwnerId(Integer ownerId) {
+		this.ownerId = ownerId;
 	}
 
-	public void setPosStatus(String posStatus) {
-		this.posStatus = posStatus;
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 	public Date getGmtCreate() {
@@ -110,7 +99,7 @@ public class StoragePosition {
 	}
 
 	public Integer getVersion() {
-		return this.version;
+		return version;
 	}
 
 	public void setVersion(Integer version) {
@@ -118,17 +107,20 @@ public class StoragePosition {
 	}
 	
 	/**
-	 * 库位状态
+	 * 仓库状态
 	 * @author yz
 	 *
 	 */
-	public enum PosStatus {
-		AVAILABLE("available", "可用"), LOCKED("locked", "已锁定"), DELETE("delete", "已删除");
+	public enum Status {
+		
+		AVAILABLE("available", "可用"),
+		LOCKED("locked", "锁定"),
+		DELETE("delete", "删除");
 		
 		private String value;
 		private String display;
 
-		private PosStatus(String value, String display) {
+		private Status(String value, String display) {
 			this.value = value;
 			this.display = display;
 		}
@@ -136,7 +128,7 @@ public class StoragePosition {
 		public String getValue() {
 			return value;
 		}
-
+		
 		public String getDisplay() {
 			return display;
 		}

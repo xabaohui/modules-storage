@@ -24,7 +24,7 @@ import com.xabaohui.modules.storage.dto.StorageInwarehouseDataDetail;
 import com.xabaohui.modules.storage.entity.StorageCheck;
 import com.xabaohui.modules.storage.entity.StorageCheckPlan;
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
-import com.xabaohui.modules.storage.entity.StorageIoTask;
+import com.xabaohui.modules.storage.entity.StorageIoBatch;
 import com.xabaohui.modules.storage.service.StorageOperaterService;
 
 /**
@@ -47,7 +47,7 @@ public class StorageOperaterServiceImpl implements StorageOperaterService {
 		if (requestDto == null) {
 			throw new RuntimeException("配货请求为空!");
 		}
-		StorageIoTask task = createStorageIoTask(requestDto.getOutTradeNo(), requestDto.getOperateor(), requestDto.getMemo(),
+		StorageIoBatch task = createStorageIoTask(requestDto.getOutTradeNo(), requestDto.getOperateor(), requestDto.getMemo(),
 				ConstantStorageIoTaskBizType.OUT_WAREHOUSE);
 		List<DistrBatchRequestDetail> listRequestDetails = requestDto.getList();// 获取请求列表
 		int totalAmount = 0;// 请求总量
@@ -123,7 +123,7 @@ public class StorageOperaterServiceImpl implements StorageOperaterService {
 	/**
 	 * 创建变动单
 	 */
-	public StorageIoTask createStorageIoTask(String outTradeNo, Integer operator, String memo, String operateType) {
+	public StorageIoBatch createStorageIoTask(String outTradeNo, Integer operator, String memo, String operateType) {
 		if (operator <= 0 || operator == null) {
 			throw new RuntimeException("skuId不能为0或者负数");
 		}
@@ -142,7 +142,7 @@ public class StorageOperaterServiceImpl implements StorageOperaterService {
 	 */
 	public List<StorageIoDetail> storageInWareHouse(Integer operator, String memo, String operateType,
 			List<StorageInwarehouseDataDetail> listDetails) {
-		StorageIoTask storageIoTask = createStorageIoTask(operator, memo, operateType);
+		StorageIoBatch storageIoTask = createStorageIoTask(operator, memo, operateType);
 
 		List<StorageIoDetail> list = new ArrayList<StorageIoDetail>();
 		for (StorageInwarehouseDataDetail data : listDetails) {
@@ -166,7 +166,7 @@ public class StorageOperaterServiceImpl implements StorageOperaterService {
 	 * @param storageIoTask
 	 * @param amount
 	 */
-	public void updateStorageIoTaskToComplete(StorageIoTask storageIoTask, Integer amount) {
+	public void updateStorageIoTaskToComplete(StorageIoBatch storageIoTask, Integer amount) {
 		inwarehouseBo.updateStorageIoTaskToComplete(storageIoTask, amount);
 	}
 

@@ -1,6 +1,7 @@
 package com.xabaohui.modules.storage.repository;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import org.junit.Assert;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.xabaohui.modules.storage.BaseTestUnit;
 import com.xabaohui.modules.storage.entity.StoragePosition;
+import com.xabaohui.modules.storage.entity.StoragePosition.PosStatus;
 
 public class StoragePositionDaoTest extends BaseTestUnit {
 
@@ -22,21 +24,32 @@ public class StoragePositionDaoTest extends BaseTestUnit {
 	}
 	
 	@Test
-	public void test() {
+	public void testFindByRepoId() {
+		final Integer repoId = 1;
 		StoragePosition pos = buildPosition();
+		pos.setRepoId(repoId);
 		dao.save(pos);
 		
-		String label = pos.getLabel();
-		StoragePosition result = dao.findByLabel(label);
-		Assert.assertNotNull(result);
+		List<StoragePosition> list = dao.findByRepoId(repoId);
+		Assert.assertFalse(list.isEmpty());
+	}
+	
+	@Test
+	public void testFindByLabelAndRepoId() {
+		final Integer repoId = 1;
+		StoragePosition pos = buildPosition();
+		pos.setRepoId(repoId);
+		dao.save(pos);
+		
+		List<StoragePosition> list = dao.findByLabelAndRepoId("L", repoId);
+		Assert.assertFalse(list.isEmpty());
 	}
 
 	private StoragePosition buildPosition() {
 		StoragePosition pos = new StoragePosition();
-		pos.setCapacity(100);;
 		pos.setLabel("L" + new Random().nextInt(100000));
-		pos.setIsfull(false);
-		pos.setIslock(false);
+		pos.setRepoId(1);
+		pos.setPosStatus(PosStatus.AVAILABLE.getValue());
 		pos.setGmtCreate(new Date());
 		pos.setGmtModify(new Date());
 		return pos;
