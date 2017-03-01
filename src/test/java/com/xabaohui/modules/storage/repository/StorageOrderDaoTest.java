@@ -9,12 +9,15 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.xabaohui.modules.storage.BaseTestUnit;
 import com.xabaohui.modules.storage.entity.StorageOrder;
 import com.xabaohui.modules.storage.entity.StorageOrder.OrderType;
 import com.xabaohui.modules.storage.entity.StorageOrder.TradeStatus;
 
+@TransactionConfiguration(defaultRollback=false)
 public class StorageOrderDaoTest extends BaseTestUnit {
 
 	@Autowired
@@ -32,6 +35,12 @@ public class StorageOrderDaoTest extends BaseTestUnit {
 		ids.add(order2.getOrderId());
 		List<StorageOrder> list = dao.findByOrderIds(ids);
 		Assert.assertEquals(2, list.size());
+	}
+	
+	@Test
+	@Transactional
+	public void testUpdateToSentByBatchId() {
+		dao.updateToSentByBatchId(28);
 	}
 
 	private StorageOrder buildOrder() {

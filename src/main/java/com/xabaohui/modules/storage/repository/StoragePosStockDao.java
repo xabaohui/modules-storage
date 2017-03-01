@@ -21,6 +21,14 @@ public interface StoragePosStockDao extends JpaRepository<StoragePosStock, Integ
 	List<StoragePosStock> findByPosId(@Param(value = "posId") Integer posId);
 	
 	/**
+	 * 查询指定库位指定商品
+	 * 
+	 * @param posId
+	 * @return
+	 */
+	StoragePosStock findByPosIdAndProductId(Integer posId, Integer productId);
+	
+	/**
 	 * 查询可用库存分布
 	 * @param productId
 	 * @return

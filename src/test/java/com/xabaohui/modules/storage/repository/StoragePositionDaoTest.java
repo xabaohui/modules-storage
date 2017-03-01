@@ -41,8 +41,9 @@ public class StoragePositionDaoTest extends BaseTestUnit {
 		pos.setRepoId(repoId);
 		dao.save(pos);
 		
-		List<StoragePosition> list = dao.findByLabelAndRepoId("L", repoId);
-		Assert.assertFalse(list.isEmpty());
+		StoragePosition record = dao.findByLabelAndRepoId(pos.getLabel(), repoId);
+		Assert.assertNotNull(record);
+//		Assert.assertFalse(list.isEmpty());
 	}
 
 	private StoragePosition buildPosition() {

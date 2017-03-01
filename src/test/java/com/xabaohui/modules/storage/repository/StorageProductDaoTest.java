@@ -21,12 +21,8 @@ public class StorageProductDaoTest extends BaseTestUnit {
 		StorageProduct s = getStorageProduct();
 		dao.save(s);
 
-		List<StorageProduct> list = dao.findBySkuIdAndRepoId(s.getSkuId(), s.getRepoId());
-
-		Assert.assertFalse(list.isEmpty());
-		for (StorageProduct s1 : list) {
-			Assert.assertEquals(s.getSkuId(), s1.getSkuId());
-		}
+		StorageProduct prod = dao.findBySkuIdAndRepoId(s.getSkuId(), s.getRepoId());
+		Assert.assertNotNull(prod);
 	}
 
 	private StorageProduct getStorageProduct() {
@@ -37,6 +33,8 @@ public class StorageProductDaoTest extends BaseTestUnit {
 		s.setLockReason("sdsdsdsd");
 		s.setSkuId(new Random().nextInt());
 		s.setSkuName("testSku");
+		s.setSubjectId(1);
+		s.setSubjectName("testSubjectName");
 		s.setRepoId(1);
 		s.setStockAmt(23333);
 		s.setStockAvailable(131312);

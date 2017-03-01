@@ -41,6 +41,9 @@ public class StorageIoDetail {
 
 	@Column(name = "sku_id", nullable = false, updatable = false)
 	private Integer skuId;
+	
+	@Column(name = "product_id")
+	private Integer productId;
 
 	@Column(name = "amount", nullable = false)
 	private Integer amount;
@@ -147,6 +150,14 @@ public class StorageIoDetail {
 	public void setAmount(Integer amount) {
 		this.amount = amount;
 	}
+	
+	public Integer getProductId() {
+		return productId;
+	}
+
+	public void setProductId(Integer productId) {
+		this.productId = productId;
+	}
 
 	public String getDetailStatus() {
 		return detailStatus;
@@ -207,8 +218,9 @@ public class StorageIoDetail {
 	}
 	
 	public enum DetailStatus {
-		PREPARING("preparing", "配货中"), 
-		SENT("sent", "已出库"), 
+		WAITING("waiting", "等待处理"), 
+		PROCESSING("processing", "处理中"), 
+		SUCCESS("success", "已完成"), 
 		LACKNESS("lackness", "缺货"), 
 		CANCEL("cancel", "已取消");
 		

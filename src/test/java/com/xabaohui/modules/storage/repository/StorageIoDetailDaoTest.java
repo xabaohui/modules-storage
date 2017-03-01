@@ -6,6 +6,9 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.xabaohui.modules.storage.BaseTestUnit;
 import com.xabaohui.modules.storage.entity.StorageIoDetail;
@@ -33,6 +36,19 @@ public class StorageIoDetailDaoTest extends BaseTestUnit{
 		Assert.assertNotNull(list);
 		Assert.assertTrue(!list.isEmpty());
 	}
+	
+	@Test
+	public void testFindNextRecordForPickup() {
+		Pageable page = new PageRequest(0, 1);
+		Page<StorageIoDetail> d = dao.findNextRecordForPickup(1, page);
+		Assert.assertNotNull(d.getContent());
+	}
+	
+	@Test
+	public void test() {
+		Pageable page = new PageRequest(0, 1);
+		dao.findProcessingRecordByBatchIdAndOperator(1, 9527, page);
+	}
 
 	private StorageIoDetail buildDetail() {
 		StorageIoDetail d = new StorageIoDetail();
@@ -41,7 +57,7 @@ public class StorageIoDetailDaoTest extends BaseTestUnit{
 		d.setGmtCreate(new Date());
 		d.setGmtModify(new Date());
 		d.setIoDetailType(IoType.OUT.getValue());
-		d.setDetailStatus(DetailStatus.PREPARING.getValue());
+		d.setDetailStatus(DetailStatus.PROCESSING.getValue());
 		d.setPosId(133);
 		d.setPosLabel("label");
 		d.setSkuId(111);

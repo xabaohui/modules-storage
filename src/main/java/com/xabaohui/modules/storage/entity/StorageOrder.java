@@ -157,7 +157,7 @@ public class StorageOrder {
 	}
 
 	public enum TradeStatus {
-		CREATED("created", "新创建"), SENT("sent", "已出库"), CANCEL("cancel", "已取消");
+		CREATED("created", "新创建"), PROCESSING("processing", "配货中"), SENT("sent", "已出库"), CANCEL("cancel", "已取消");
 
 		private String value;
 		private String display;

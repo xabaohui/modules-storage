@@ -13,6 +13,7 @@ import com.xabaohui.modules.storage.entity.StorageOrder.OrderType;
 public class CreateOrderDTO {
 
 	private Integer repoId; // 仓库Id
+	private Integer shopId; // 店铺Id
 	private String outTradeNo; // 订单号
 	private OrderType orderType; // 订单类型
 	private List<CreateOrderDetail> detailList; // 订单详情
@@ -23,6 +24,14 @@ public class CreateOrderDTO {
 
 	public void setRepoId(Integer repoId) {
 		this.repoId = repoId;
+	}
+	
+	public Integer getShopId() {
+		return shopId;
+	}
+
+	public void setShopId(Integer shopId) {
+		this.shopId = shopId;
 	}
 
 	public String getOutTradeNo() {

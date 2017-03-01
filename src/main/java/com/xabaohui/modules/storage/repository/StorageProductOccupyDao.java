@@ -14,4 +14,12 @@ public interface StorageProductOccupyDao extends CrudRepository<StorageProductOc
 	 * @return
 	 */
 	List<StorageProductOccupy> findByOrderId(Integer orderId);
+	
+	/**
+	 * 按照订单Id和商品Id查询占用记录
+	 * @param orderId
+	 * @param productId
+	 * @return
+	 */
+	StorageProductOccupy findByOrderIdAndProductId(Integer orderId, Integer productId);
 }

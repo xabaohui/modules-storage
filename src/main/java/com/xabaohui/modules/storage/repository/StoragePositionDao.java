@@ -19,11 +19,13 @@ public interface StoragePositionDao extends CrudRepository<StoragePosition, Inte
 	List<StoragePosition> findByRepoId(@Param("repoId")Integer repoId);
 
 	/**
-	 * 按照库位标签查找库位(模糊查找)
+	 * 按照库位标签查找库位
 	 * @param label
 	 * @param repoId
 	 * @return
 	 */
-	@Query("from StoragePosition where label like %:label% and repoId=:repoId and posStatus!='delete'")
-	List<StoragePosition> findByLabelAndRepoId(@Param("label")String label, @Param("repoId")Integer repoId);
+	@Query("from StoragePosition where label=:label and repoId=:repoId and posStatus!='delete'")
+	StoragePosition findByLabelAndRepoId(@Param("label")String label, @Param("repoId")Integer repoId);
+	
+	
 }

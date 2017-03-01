@@ -160,6 +160,33 @@ public class StorageIoBatch {
 		public String getDisplay() {
 			return display;
 		}
+		
+		public static BizType getBizType(String value) {
+			for (BizType bizType : BizType.values()) {
+				if(bizType.getValue().equals(value)) {
+					return bizType;
+				}
+			}
+			return null;
+		}
+		
+		public static boolean isInStorage(String bizType) {
+			BizType type = getBizType(bizType);
+			return isInStorage(type);
+		}
+		
+		public static boolean isInStorage(BizType bizType) {
+			switch (bizType) {
+			case IN_BATCH:
+				return true;
+			case IN_DAILY:
+				return true;
+			case OUT_BATCH:
+				return false;
+			default:
+				throw new RuntimeException("bizType不合法:" + bizType);
+			}
+		}
 	}
 
 	/**
