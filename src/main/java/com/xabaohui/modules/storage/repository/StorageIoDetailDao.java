@@ -31,9 +31,9 @@ public interface StorageIoDetailDao extends CrudRepository<StorageIoDetail, Inte
 	 * 查找(下一条)等待取件的记录
 	 * @return
 	 */
-	@Query(countQuery="select count(*) from StorageIoDetail where ioDetailType='outwarehouse' and detailStatus='waiting' and batchId=:batchId",
-			value="from StorageIoDetail where ioDetailType='outwarehouse' and detailStatus='waiting' and batchId=:batchId order by posLabel asc")
-	Page<StorageIoDetail> findNextRecordForPickup(@Param("batchId")Integer batchId, Pageable page);
+	@Query(nativeQuery=true,
+			value="select * from storage_io_detail where io_detail_type='outwarehouse' and detail_status='waiting' and batch_id=:batchId order by pos_label asc limit 1")
+	StorageIoDetail findNextRecordForPickup(@Param("batchId")Integer batchId);
 	
 	/**
 	 * 查找指定批次指定操作员锁定的正在处理的记录
@@ -41,7 +41,7 @@ public interface StorageIoDetailDao extends CrudRepository<StorageIoDetail, Inte
 	 * @param operator
 	 * @return
 	 */
-	@Query(countQuery="select count(*) from StorageIoDetail where ioDetailType='outwarehouse' and detailStatus='processing' and batchId=:batchId and operator=:operator",
-			value="from StorageIoDetail where ioDetailType='outwarehouse' and detailStatus='processing' and batchId=:batchId and operator=:operator order by gmtModify asc")
-	Page<StorageIoDetail> findProcessingRecordByBatchIdAndOperator(@Param("batchId")Integer batchId, @Param("operator")Integer operator, Pageable page);
+	@Query(nativeQuery=true,
+			value="select * from storage_io_detail where io_detail_type='outwarehouse' and detail_status='processing' and batch_id=:batchId and operator=:operator order by gmt_modify asc limit 1")
+	StorageIoDetail findProcessingRecordByBatchIdAndOperator(@Param("batchId")Integer batchId, @Param("operator")Integer operator);
 }

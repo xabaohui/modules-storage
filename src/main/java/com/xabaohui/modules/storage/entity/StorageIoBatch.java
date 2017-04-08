@@ -29,7 +29,7 @@ public class StorageIoBatch {
 	@Column(name = "memo", nullable = false)
 	private String memo;
 
-	@Column(name = "operator", nullable = false)
+	@Column(name = "operator")
 	private Integer operator;
 
 	@Column(name = "biz_type", nullable = false)
@@ -143,7 +143,7 @@ public class StorageIoBatch {
 	 */
 	public enum BizType {
 
-		IN_BATCH("in_batch", "批量入库"), IN_DAILY("in_daily", "日常入库"), OUT_BATCH("out_batch", "批量出库");
+		IN_BATCH("in_batch", "批量入库"), IN_DAILY("in_daily", "日常入库"), OUT_BATCH("out_batch", "批量出库"), OUT_DAILY("out_daily", "日常入库");
 
 		private String value;
 		private String display;
@@ -178,11 +178,29 @@ public class StorageIoBatch {
 		public static boolean isInStorage(BizType bizType) {
 			switch (bizType) {
 			case IN_BATCH:
-				return true;
 			case IN_DAILY:
 				return true;
 			case OUT_BATCH:
+			case OUT_DAILY:
 				return false;
+			default:
+				throw new RuntimeException("bizType不合法:" + bizType);
+			}
+		}
+		
+		public static boolean isDailyStorage(String bizType) {
+			BizType type = getBizType(bizType);
+			return isDailyStorage(type);
+		}
+		
+		public static boolean isDailyStorage(BizType bizType) {
+			switch (bizType) {
+			case IN_BATCH:
+			case OUT_BATCH:
+				return false;
+			case IN_DAILY:
+			case OUT_DAILY:
+				return true;
 			default:
 				throw new RuntimeException("bizType不合法:" + bizType);
 			}

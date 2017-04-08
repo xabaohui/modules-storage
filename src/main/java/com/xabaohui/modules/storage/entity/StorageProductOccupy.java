@@ -46,7 +46,7 @@ public class StorageProductOccupy {
 	private Date createTime;
 
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "update_time", updatable = false)
+	@Column(name = "update_time")
 	private Date updateTime;
 
 	@Version

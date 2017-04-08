@@ -39,15 +39,13 @@ public class StorageIoDetailDaoTest extends BaseTestUnit{
 	
 	@Test
 	public void testFindNextRecordForPickup() {
-		Pageable page = new PageRequest(0, 1);
-		Page<StorageIoDetail> d = dao.findNextRecordForPickup(1, page);
-		Assert.assertNotNull(d.getContent());
+		StorageIoDetail d = dao.findNextRecordForPickup(1);
+		Assert.assertNotNull(d);
 	}
 	
 	@Test
 	public void test() {
-		Pageable page = new PageRequest(0, 1);
-		dao.findProcessingRecordByBatchIdAndOperator(1, 9527, page);
+		dao.findProcessingRecordByBatchIdAndOperator(1, 9527);
 	}
 
 	private StorageIoDetail buildDetail() {

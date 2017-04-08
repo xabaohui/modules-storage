@@ -28,6 +28,9 @@ public class StorageOrder {
 
 	@Column(name = "out_trade_no", nullable = false)
 	private String outTradeNo;
+	
+	@Column(name = "amount", nullable = false)
+	private Integer amount;
 
 	@Column(name = "order_detail", nullable = false)
 	private String orderDetail;
@@ -70,6 +73,14 @@ public class StorageOrder {
 
 	public void setOutTradeNo(String outTradeNo) {
 		this.outTradeNo = outTradeNo;
+	}
+
+	public Integer getAmount() {
+		return amount;
+	}
+
+	public void setAmount(Integer amount) {
+		this.amount = amount;
 	}
 
 	public String getOrderDetail() {

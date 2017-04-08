@@ -20,7 +20,7 @@ public interface StorageService {
 	 * 直接出库<p/>
 	 * <ol>
 	 * <li>无需新建批次，该方法会自动关联记录到当日批次(type=daily)</li>
-	 * <li>更新StorageProduct，减少总量</li>
+	 * <li>更新StorageProduct，减少总量，减少可用量</li>
 	 * <li>更新StoragePosStock，减少总量</li>
 	 * <li>新增StorageIoDetail，记录posId, skuId, amount, operator, status=sent</li>
 	 * </ol>
@@ -36,21 +36,23 @@ public interface StorageService {
 	 * 创建订单<p/>
 	 * <ol>
 	 * <li>创建StorageOrder, status=created</li>
-	 * <li>修改StorageProduct，增加占用库存</li>
-	 * <li>新增StorageProductOccupy，关联StorageOrder, StorageProduct</li>
+	 * <li>修改StorageProduct，增加占用库存，减少可用库存（防止超卖）</li>
+	 * <li>新增库存占用明细StorageProductOccupy，关联StorageOrder, StorageProduct</li>
 	 * </ol>
 	 */
 	StorageOrder createOrder(CreateOrderDTO request);
 	
 	/**
-	 * 生成配货单<p/>
+	 * 分配订单到库位<p/>
 	 * <ol>
-	 * <li>创建StorageIoBatch</li>
-	 * <li>创建StorageIoDetail，status=preparing</li>
-	 * <li>更新StoragePosStock，增加占用量</li>
+	 * <li>创建配货批次StorageIoBatch</li>
+	 * <li>更新订单状态StorageOrder.tradeStatus=PROCESSING</li>
+	 * <li>根据（下单阶段）库存占用明细StorageProductOccupy，查找可用的库位库存StoragePosStock</li>
+	 * <li>创建出库明细StorageIoDetail，status=waiting</li>
+	 * <li>更新库位库存StoragePosStock，增加占用量（防止同一库位的商品被分配给多个订单）</li>
 	 * </ol>
 	 */
-	int prepareBatchSend(Integer repoId, List<Integer> orderIds, Integer operator);
+	int arrangeOrder(Integer repoId, List<Integer> orderIds, Integer operator);
 	
 	/**
 	 * 取件-完成操作<p/>
@@ -89,7 +91,7 @@ public interface StorageService {
 	 * 部分缺货<p/>
 	 * <ol>
 	 * <li>ioDetail拆分为两条记录：有货和缺货；</li>
-	 * <li>有货的执行取件操作（{@link StorageService#popPickUp(Integer, Integer, Integer)}）；</li>
+	 * <li>有货的执行取件操作（{@link StorageService#pickupDoneAndLockNext(Integer, Integer)}）；</li>
 	 * <li>缺货的执行缺货操作（{@link StorageService#lackAll(Integer, Integer)}）</li>
 	 * <li>返回下一条等待取件的记录；</li>
 	 * </ol>
@@ -134,7 +136,7 @@ public interface StorageService {
 	 * @param posLabel 库位标签
 	 * @param operator 操作员
 	 */
-	void addInStorageDetail(Integer batchId, Integer skuId, Integer amount, String posLabel, Integer operator);
+	StorageIoDetail addInStorageDetail(Integer batchId, Integer skuId, Integer amount, String posLabel, Integer operator);
 	
 	/**
 	 * 确认入库

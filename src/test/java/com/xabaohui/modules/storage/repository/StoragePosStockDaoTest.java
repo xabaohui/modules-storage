@@ -45,6 +45,21 @@ public class StoragePosStockDaoTest extends BaseTestUnit {
 		List<StockDTO> stockDTO = stockDao.findAvailableStock(prod.getProductId());
 		Assert.assertNotNull(stockDTO);
 	}
+	
+	@Test
+	public void testFindByLabelAndProductId() {
+		StoragePosition pos = buildPosition();
+		pos = posDao.save(pos);
+		StorageProduct prod = buildStorageProduct();
+		prod = prodDao.save(prod);
+		StoragePosStock stock = buildStoragePosStock();
+		stock.setProductId(prod.getProductId());
+		stock.setPosId(pos.getPosId());
+		stockDao.save(stock);
+		
+		StoragePosStock stockRs = stockDao.findByLabelAndProductId(pos.getRepoId(), pos.getLabel(), prod.getProductId());
+		Assert.assertNotNull(stockRs);
+	}
 
 	private StoragePosStock buildStoragePosStock() {
 		StoragePosStock s = new StoragePosStock();

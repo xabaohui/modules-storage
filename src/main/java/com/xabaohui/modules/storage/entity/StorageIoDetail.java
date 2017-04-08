@@ -48,6 +48,10 @@ public class StorageIoDetail {
 	@Column(name = "amount", nullable = false)
 	private Integer amount;
 
+	// 出库/入库操作完成后，库位中该商品剩余库存量
+	@Column(name = "balance")
+	private Integer balance;
+
 	@Column(name = "operator", nullable = false)
 	private Integer operator;
 
@@ -151,6 +155,14 @@ public class StorageIoDetail {
 		this.amount = amount;
 	}
 	
+	public Integer getBalance() {
+		return balance;
+	}
+
+	public void setBalance(Integer balance) {
+		this.balance = balance;
+	}
+
 	public Integer getProductId() {
 		return productId;
 	}
@@ -222,6 +234,7 @@ public class StorageIoDetail {
 		PROCESSING("processing", "处理中"), 
 		SUCCESS("success", "已完成"), 
 		LACKNESS("lackness", "缺货"), 
+		USELESS("useless", "无效"), 
 		CANCEL("cancel", "已取消");
 		
 		private String value;
@@ -238,6 +251,32 @@ public class StorageIoDetail {
 
 		public String getDisplay() {
 			return display;
+		}
+		
+		/**
+		 * 状态是否是最终状态
+		 * @param status
+		 * @return
+		 */
+		public static boolean isFinalStatus(DetailStatus status) {
+			return SUCCESS.equals(status) || LACKNESS.equals(status) || USELESS.equals(status);
+		}
+		
+		/**
+		 * 状态是否是最终状态
+		 * @param status
+		 * @return
+		 */
+		public static boolean isFinalStatus(String status) {
+			return isFinalStatus(getDetailStatus(status));
+		}
+		
+		public static DetailStatus getDetailStatus(String status) {
+			for (DetailStatus st : DetailStatus.values()) {
+				if(st.getValue().equals(status))
+					return st;
+			}
+			return null;
 		}
 	}
 }

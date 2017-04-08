@@ -1,14 +1,13 @@
 package com.xabaohui.modules.storage.service.impl;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -59,11 +58,51 @@ public class StorageServiceImpl implements StorageService {
 	private StorageProductOccupyDao storageProductOccupyDao;
 	@Autowired
 	private StorageRepoInfoDao storageRepoInfoDao;
+	
+	private static final Logger logger = LoggerFactory.getLogger(StorageServiceImpl.class);
 
+	@Transactional
 	@Override
 	public void directSend(Integer repoId, Integer skuId, Integer amount, String posLabel, Integer operator) {
-		// TODO Auto-generated method stub
+		// 自动关联当日批次
+		StorageIoBatch batch = this.storageIoBatchDao.findDailyBatchByBizTypeAndRepoId(BizType.OUT_DAILY.getValue(),
+				repoId);
+		if (batch == null) {
+			batch = saveStorageIoBatch(repoId, null, BizType.OUT_DAILY, "当日自动批次");
+		}
+		// 减少商品库存
+		Date now = new Date();
+		StorageProduct prod = this.storageProductDao.findBySkuIdAndRepoId(skuId, repoId);
+		if (prod == null) {
+			throw new RuntimeException(String.format("prod不存在, skuId=%s, repoId=%s", skuId, repoId));
+		}
+		prod.setStockAmt(prod.getStockAmt() - amount);
+		prod.setStockAvailable(prod.getStockAvailable() - amount);
+		prod.setGmtModify(now);
+		this.storageProductDao.save(prod);
+		logger.info("[商品库存变更] productId={0}, 总库存-{1}, 可用库存-{1}", prod.getProductId(), amount);
+		// 更新库位库存:直接减少总量。
+		StoragePosStock stock = this.storagePosStockDao.findByLabelAndProductId(repoId, posLabel, prod.getProductId());
+		if (stock == null) {
+			throw new RuntimeException(String.format("posStock不存在, repoId=%s, label=%s, productId=%s", repoId, posLabel, prod.getProductId()));
+		}
+		Integer available = stock.getTotalAmt() - stock.getOccupyAmt();
+		if(available < amount) {
+			throw new RuntimeException(String.format("库位库存不足，期望%s, 实际%s", amount, available));
+		}
+		stock.setTotalAmt(stock.getTotalAmt() - amount);
+		stock.setGmtModify(new Date());
+		logger.info("[库位库存变更] stockId={0}, 总库存-{1}", stock.getStockId(), amount);
+		this.storagePosStockDao.save(stock);
+		
+		// 生成出库明细
+		StorageIoDetail detail = saveStorageIoDetail(batch, stock.getPosId(), posLabel, prod.getProductId(), skuId, amount, operator, null);
+		updateDetailStatusAndBalance(detail, stock.getTotalAmt(), DetailStatus.SUCCESS);
 
+		// 更新批次数量
+		batch.setAmount(batch.getAmount() + amount);
+		batch.setGmtModify(new Date());
+		this.storageIoBatchDao.save(batch);
 	}
 
 	@Override
@@ -71,16 +110,21 @@ public class StorageServiceImpl implements StorageService {
 	public StorageOrder createOrder(CreateOrderDTO request) {
 		// param check
 		checkForCreateOrder(request);
-		
+
 		// 创建StorageOrder, status=created
 		// 修改StorageProduct，增加占用库存
 		// 新增StorageProductOccupy，关联StorageOrder, StorageProduct
 		List<CreateOrderDetail> detailList = request.getDetailList();
+		Integer totalAmount = 0;
+		for (CreateOrderDetail detail : detailList) {
+			totalAmount += detail.getAmount();
+		}
 		Integer repoId = request.getRepoId();
 		StorageOrder order = new StorageOrder();
 		Date now = new Date();
 		order.setOrderType(OrderType.SELF.getValue());
 		order.setOutTradeNo(request.getOutTradeNo());
+		order.setAmount(totalAmount);
 		order.setRepoId(request.getRepoId());
 		order.setShopId(request.getShopId());
 		order.setTradeStatus(TradeStatus.CREATED.getValue());
@@ -89,10 +133,12 @@ public class StorageServiceImpl implements StorageService {
 		order.setGmtCreate(now);
 		order.setGmtModify(now);
 		this.storageOrderDao.save(order);
+		logger.info("[创建订单] orderId={}, outTradeNo={}, orderDetail={}",
+				order.getOrderId(), order.getOutTradeNo(), orderDetail);
 
 		for (CreateOrderDetail detail : detailList) {
 			StorageProduct prod = this.storageProductDao.findBySkuIdAndRepoId(detail.getSkuId(), repoId);
-			if(prod == null) {
+			if (prod == null) {
 				throw new RuntimeException(String.format("库存商品不存在,skuId=%s,repoId=%s.", detail.getSkuId(), repoId));
 			}
 			if (prod.getStockAvailable() < detail.getAmount()) {
@@ -106,9 +152,18 @@ public class StorageServiceImpl implements StorageService {
 
 	/**
 	 * 占用库存
-	 * @param prod 商品
-	 * @param orderId 订单
-	 * @param amount 占用数量
+	 * <p/>
+	 * <ol>
+	 * <li>商品StorageProduct：总量不变，占用量增加，可用量减少</li>
+	 * <li>占用明细StorageProductOccupy ：原始占用=当前占用</li>
+	 * </ol>
+	 * 
+	 * @param prod
+	 *            商品
+	 * @param orderId
+	 *            订单
+	 * @param amount
+	 *            占用数量
 	 */
 	private void doOccupy(StorageProduct prod, Integer orderId, Integer amount) {
 		Date now = new Date();
@@ -125,10 +180,90 @@ public class StorageServiceImpl implements StorageService {
 		occupy.setCreateTime(now);
 		occupy.setUpdateTime(now);
 		this.storageProductOccupyDao.save(occupy);
+		logger.info("[商品库存占用] productId={}, orderId={}, amount={}",
+				prod.getProductId(), orderId, amount);
 	}
-	
+
 	/**
-	 * 取消库存占用
+	 * 结束库存占用，按照出库/缺货两种情况，处理方式不同
+	 * <p/>
+	 * <ol>
+	 * <li>更新库位库存StoragePosStock：总量减少，占用量减少</li>
+	 * <li>更新商品库存StorageProduct和占用明细StorageProductOccupy，分两种情况:</li>
+	 * <li>a)出库类型：总量减少，占用量减少，可用量不变</li>
+	 * <li>b)缺货类型：总量减少，占用量不变，可用量减少</li>
+	 * <li>更新出库明细</li>
+	 * </ol>
+	 * 
+	 * @param detail
+	 *            出库明细
+	 */
+	private void finishOccupy(StorageIoDetail detail, DetailStatus detailStatus) {
+		// 减少商品库存和占用
+		Date now = new Date();
+		final Integer productId = detail.getProductId();
+		final Integer amount = detail.getAmount();
+		StorageProduct prod = this.storageProductDao.findOne(productId);
+		if (prod == null) {
+			throw new RuntimeException("prod不存在, productId=" + productId);
+		}
+		prod.setStockAmt(prod.getStockAmt() - amount);
+		// 如果是缺货，库存占用依然需要保持，需要减少可用库存（在下单阶段扣减的库存基础上额外扣减）
+		if (detailStatus.equals(DetailStatus.LACKNESS)) {
+			prod.setStockAvailable(prod.getStockAmt() - amount);
+			logger.info("[商品缺货] 减少总库存、可用库存，保留占用库存，productId={}, detailId={}, amount={}",
+					productId, detail.getDetailId(), amount);
+		}
+		// 如果是出库，只需减少占用库存，可用库存在下单阶段已扣减
+		else if (detailStatus.equals(DetailStatus.SUCCESS)) {
+			final Integer orderId = detail.getOrderId();
+			prod.setStockOccupy(prod.getStockOccupy() - amount);
+			StorageProductOccupy occupy = this.storageProductOccupyDao.findByOrderIdAndProductId(orderId, productId);
+			if (occupy == null) {
+				throw new RuntimeException(String.format("occupy不存在, orderId=%s, productId=%s", orderId, productId));
+			}
+			occupy.setCurAmt(occupy.getCurAmt() - amount);
+			if (occupy.getCurAmt() == 0) {
+				occupy.setStatus(StorageProductOccupy.Status.SENT.getValue());
+			}
+			occupy.setUpdateTime(now);
+			this.storageProductOccupyDao.save(occupy);
+			logger.info("[商品出库] 减少总库存、占用库存，productId={}, detailId={}, amount={}",
+					productId, detail.getDetailId(), amount);
+		}
+		// 其他状态，异常
+		else {
+			throw new RuntimeException("结束库存占用时，detailStatus必须是SUCCESS或LACKNESS，detailStatus="
+					+ detailStatus.getValue());
+		}
+		prod.setGmtModify(now);
+		this.storageProductDao.save(prod);
+		
+		// 减少库位库存和占用
+		StoragePosStock stock = this.storagePosStockDao.findByPosIdAndProductId(detail.getPosId(),
+				productId);
+		if (stock == null) {
+			throw new RuntimeException(String.format("stock不存在, posId=%s, productId=%s", detail.getPosId(),
+					productId));
+		}
+		stock.setOccupyAmt(stock.getOccupyAmt() - amount);
+		stock.setTotalAmt(stock.getTotalAmt() - amount);
+		stock.setGmtModify(now);
+		this.storagePosStockDao.save(stock);
+		logger.info("[减少库位库存] 减少总库存和占用库存，stockId={}, amount={}",
+				stock.getStockId(), amount);
+		
+		// 更新出库明细为SUCCESS，更新库位库存余量
+		updateDetailStatusAndBalance(detail, stock.getTotalAmt(), detailStatus);
+	}
+
+	/**
+	 * 取消库存占用<p/>
+	 * <ol>
+	 * <li>商品库存StorageProduct：总量不变，占用量减少，可用量增加</li>
+	 * <li>占用明细StorageProductOccupy：状态变为CANCEL</li>
+	 * </ol>
+	 * 
 	 * @param orderId
 	 */
 	private void undoOccupy(Integer orderId) {
@@ -143,6 +278,8 @@ public class StorageServiceImpl implements StorageService {
 			prod.setStockAvailable(prod.getStockAvailable() + occupy.getCurAmt());
 			prod.setGmtModify(now);
 			this.storageProductDao.save(prod);
+			logger.info("[取消库存占用] productId={}, orderId={}",
+					prod.getProductId(), orderId);
 		}
 	}
 
@@ -150,129 +287,144 @@ public class StorageServiceImpl implements StorageService {
 		if (request == null) {
 			throw new IllegalArgumentException("request不能为空");
 		}
-		if(StringUtils.isBlank(request.getOutTradeNo())) {
+		if (StringUtils.isBlank(request.getOutTradeNo())) {
 			throw new IllegalArgumentException("OutTradeNo不能为空");
 		}
-		if(request.getRepoId() == null) {
+		if (request.getRepoId() == null) {
 			throw new IllegalArgumentException("RepoId不能为空");
 		}
-		if(request.getShopId() == null) {
+		if (request.getShopId() == null) {
 			throw new IllegalArgumentException("ShopId不能为空");
 		}
-		if(request.getOrderType() == null) {
+		if (request.getOrderType() == null) {
 			throw new IllegalArgumentException("OrderType不能为空");
 		}
 	}
 
 	@Override
 	@Transactional
-	public int prepareBatchSend(Integer repoId, List<Integer> orderIds, Integer operator) {
+	public int arrangeOrder(Integer repoId, List<Integer> orderIds, Integer operator) {
 		if (orderIds == null || orderIds.isEmpty()) {
 			throw new IllegalArgumentException("orderIds不能为空");
 		}
-		// 创建StorageIoBatch 
+		// 创建StorageIoBatch
 		StorageIoBatch batch = saveStorageIoBatch(repoId, operator, BizType.OUT_BATCH, "订单出库");
 		// 遍历所有订单，执行分配库位的操作
+		Integer totalAmt = 0;
 		for (Integer orderId : orderIds) {
 			StorageOrder order = this.storageOrderDao.findOne(orderId);
 			if (order == null) {
 				throw new RuntimeException("order不存在, orderId=" + orderId);
 			}
-			if(!repoId.equals(order.getRepoId())) {
+			if (!repoId.equals(order.getRepoId())) {
 				throw new RuntimeException("所选订单不属于同一个仓库");
 			}
-			if(!TradeStatus.CREATED.getValue().equals(order.getTradeStatus())) {
+			if (!TradeStatus.CREATED.getValue().equals(order.getTradeStatus())) {
 				throw new RuntimeException("所选订单不能生成配货单，tradeStatus=" + order.getTradeStatus());
 			}
 			// 更新订单状态为处理中
 			order.setTradeStatus(TradeStatus.PROCESSING.getValue());
 			order.setGmtModify(new Date());
 			this.storageOrderDao.save(order);
+			totalAmt += order.getAmount();
 			// 根据订单占用量，分配库位
-			List<StorageProductOccupy> occupys = this.storageProductOccupyDao.findByOrderId(orderId);
-			if (occupys == null || occupys.isEmpty()) {
-				throw new RuntimeException("occupys不存在, orderId=" + orderId);
+			arrangeOrder(operator, batch, orderId);
+		}
+		batch.setAmount(totalAmt);
+		this.storageIoBatchDao.save(batch);
+		return batch.getBatchId();
+	}
+
+	private void arrangeOrder(Integer operator, StorageIoBatch batch, Integer orderId) {
+		logger.info("[分配库位] orderId={}, operator={}", orderId, operator);
+		List<StorageProductOccupy> occupys = this.storageProductOccupyDao.findByOrderId(orderId);
+		if (occupys == null || occupys.isEmpty()) {
+			throw new RuntimeException("occupys不存在, orderId=" + orderId);
+		}
+		for (StorageProductOccupy occupy : occupys) {
+			// 查询可用库存，生成StorageIoDetail，更新StoragePosStock的占用量
+			arrangeOrder(operator, batch, occupy.getProductId(), occupy.getCurAmt(), orderId);
+		}
+	}
+
+	/**
+	 * 根据需要配货的数量，自动分配库位
+	 * @param operator
+	 * @param batch
+	 * @param productId
+	 * @param amount
+	 * @param orderId 订单Id，可空
+	 */
+	private void arrangeOrder(Integer operator, StorageIoBatch batch, Integer productId, Integer amount, Integer orderId) {
+		List<StockDTO> stocks = this.storagePosStockDao.findAvailableStock(productId);
+		int amountNotDivide = amount;
+		for (StockDTO stock : stocks) {
+			int amountAvailable = stock.getTotalAmt() - stock.getOccupyAmt();// 当前库位可用数量
+			int amountDivide = Math.min(amountAvailable, amountNotDivide);// 本次分配数量
+			// 生成出库明细
+			StorageIoDetail detail = saveStorageIoDetail(batch, stock.getPosId(), stock.getPosLabel(), productId, stock.getSkuId(), amountDivide, operator, orderId);
+			// 更新库位库存
+			// 1)批量出库操作，则增加占用量。如果取件成功/缺货，则减少总量和占用量。
+			// 2)直接出库操作，则直接减少总量。
+			String message = null;
+			StoragePosStock posStock = this.storagePosStockDao.findOne(stock.getStockId());
+			if(BizType.OUT_BATCH.getValue().equals(batch.getBizType())) {
+				posStock.setOccupyAmt(posStock.getOccupyAmt() + amountDivide);
+				message = "批量出库，增加占用量" + amountDivide;
+			} else if(BizType.OUT_DAILY.getValue().equals(batch.getBizType())){
+				posStock.setTotalAmt(posStock.getTotalAmt() - amountDivide);
+				updateDetailStatusAndBalance(detail, posStock.getTotalAmt(), DetailStatus.SUCCESS);
+				message = "日常出库，减少可用量" + amountDivide;
+			} else {
+				throw new RuntimeException("分配库位失败，业务类型bizType=" + batch.getBizType());
 			}
-			for (StorageProductOccupy occupy : occupys) {
-				// 查询可用库存，生成StorageIoDetail，更新StoragePosStock的占用量
-				List<StockDTO> stocks = this.storagePosStockDao.findAvailableStock(occupy.getProductId());
-				int amountNotDivide = occupy.getCurAmt();
-				for (StockDTO stock : stocks) {
-					int amountAvailable = stock.getTotalAmt() - stock.getOccupyAmt();// 当前库位可用数量
-					int amountDivide = Math.min(amountAvailable, amountNotDivide);// 本次分配数量
-					StoragePosition pos = new StoragePosition();
-					pos.setPosId(stock.getPosId());
-					pos.setLabel(stock.getPosLabel());
-					// 生成StorageIoDetail
-					saveStorageIoDetail(batch, pos, occupy.getProductId(), stock.getSkuId(), amountDivide, operator, orderId);
-					// 更新StoragePosStock的占用量
-					StoragePosStock posStock = this.storagePosStockDao.findOne(stock.getStockId());
-					posStock.setOccupyAmt(posStock.getOccupyAmt() + amountDivide);
-					this.storagePosStockDao.save(posStock);
-					amountNotDivide -= amountDivide;// 剩余未分配数量
-					if(amountNotDivide == 0) {
-						break;
-					}
-					if(amountNotDivide < 0) {
-						throw new RuntimeException("分配库位错误，未分配数量小于0");
-					}
-				}
-				if(amountNotDivide > 0) {
-					throw new RuntimeException("分配库位错误，库存量不足");
-				}
+			this.storagePosStockDao.save(posStock);
+			logger.info("[更新库位库存] stockId={}, {}", stock.getStockId(), message);
+			amountNotDivide -= amountDivide;// 剩余未分配数量
+			if (amountNotDivide == 0) {
+				break;
+			}
+			if (amountNotDivide < 0) {
+				throw new RuntimeException("分配库位错误，未分配数量小于0");
 			}
 		}
-		return batch.getBatchId();
+		if (amountNotDivide > 0) {
+			throw new RuntimeException("分配库位错误，库存量不足");
+		}
 	}
 
 	@Override
 	@Transactional
 	public StorageIoDetail pickupDoneAndLockNext(Integer ioDetailId, Integer operator) {
+		checkForPickup(ioDetailId, operator);
+		// 更新出库明细状态，status:processing->success
+		StorageIoDetail current = findAndCheckDetailForPickupOrLackness(ioDetailId, operator);
+		// 结束库存占用，减少库位库存、商品库存和占用量、更新出库明细
+		finishOccupy(current, DetailStatus.SUCCESS);
+		// 返回下一条记录，status:waiting->processing（防止多个操作员同时操作过程中看到同一个记录）
+		return doPickupLock(current.getBatchId(), operator);
+	}
+
+	private StorageIoDetail findAndCheckDetailForPickupOrLackness(Integer ioDetailId, Integer operator) {
+		StorageIoDetail detail = this.storageIoDetailDao.findOne(ioDetailId);
+		if (!DetailStatus.PROCESSING.getValue().equals(detail.getDetailStatus())) {
+			throw new RuntimeException("不能执行取件，detailStatus=" + detail.getDetailStatus());
+		}
+		if (!detail.getOperator().equals(operator)) {
+			throw new RuntimeException("不能操作别人锁定的记录");
+		}
+		return detail;
+	}
+
+	private void checkForPickup(Integer ioDetailId, Integer operator) {
 		if (ioDetailId == null) {
 			throw new IllegalArgumentException("ioDetailId不能为空");
 		}
 		if (operator == null) {
 			throw new IllegalArgumentException("operator不能为空");
 		}
-		// 已取件，status:processing->success
-		StorageIoDetail current = this.storageIoDetailDao.findOne(ioDetailId);
-		if(!DetailStatus.PROCESSING.getValue().equals(current.getDetailStatus())) {
-			throw new RuntimeException("不能执行取件，detailStatus=" + current.getDetailStatus());
-		}
-		if(!current.getOperator().equals(operator)) {
-			throw new RuntimeException("不能操作别人锁定的记录");
-		}
-		current.setDetailStatus(DetailStatus.SUCCESS.getValue());
-		this.storageIoDetailDao.save(current);
-		// 减少库位库存和占用
-		StoragePosStock stock = this.storagePosStockDao.findByPosIdAndProductId(current.getPosId(), current.getProductId());
-		if (stock == null) {
-			throw new RuntimeException(String.format("stock不存在, posId=%s, productId=%s",current.getPosId(), current.getProductId()));
-		}
-		stock.setOccupyAmt(stock.getOccupyAmt() - current.getAmount());
-		stock.setTotalAmt(stock.getTotalAmt() - current.getAmount());
-		this.storagePosStockDao.save(stock);
-		// 减少商品库存和占用
-		StorageProduct prod = this.storageProductDao.findOne(current.getProductId());
-		if (prod == null) {
-			throw new RuntimeException("prod不存在, productId=" + current.getProductId());
-		}
-		prod.setStockAmt(prod.getStockAmt() - current.getAmount());
-		prod.setStockOccupy(prod.getStockOccupy() - current.getAmount());
-		this.storageProductDao.save(prod);
-		StorageProductOccupy occupy = this.storageProductOccupyDao.findByOrderIdAndProductId(current.getOrderId(), current.getProductId());
-		if (occupy == null) {
-			throw new RuntimeException(String.format("occupy不存在, orderId=%s, productId=%s",current.getOrderId(), current.getProductId()));
-		}
-		occupy.setCurAmt(occupy.getCurAmt() - current.getAmount());
-		if(occupy.getCurAmt() == 0) {
-			occupy.setStatus(StorageProductOccupy.Status.SENT.getValue());
-		}
-		this.storageProductOccupyDao.save(occupy);
-		// 返回下一条记录，status:waiting->processing（防止多个操作员同时操作过程中看到同一个记录）
-		return doPickupLock(current.getBatchId(), operator);
 	}
-	
+
 	@Override
 	@Transactional
 	public StorageIoDetail pickupLock(Integer batchId, Integer operator) {
@@ -288,34 +440,84 @@ public class StorageServiceImpl implements StorageService {
 	// 返回下一条记录或找到丢失的记录
 	private StorageIoDetail doPickupLock(Integer batchId, Integer operator) {
 		// 查找意外退出、关机丢失的数据（锁定但未取货）
-		Pageable page = new PageRequest(0, 1);
-		Page<StorageIoDetail> lost = this.storageIoDetailDao.findProcessingRecordByBatchIdAndOperator(batchId, operator, page);
-		if(lost != null && lost.hasContent()) {
-			return lost.getContent().get(0);
+		StorageIoDetail lost = this.storageIoDetailDao.findProcessingRecordByBatchIdAndOperator(batchId, operator);
+		if (lost != null) {
+			logger.info("[返回已锁定记录] ioDetailId={}, batchId={}, operator={}", lost.getDetailId(), batchId, operator);
+			return lost;
 		}
-		
-		Page<StorageIoDetail> next = this.storageIoDetailDao.findNextRecordForPickup(batchId, page);
-		if(next == null || !next.hasContent()) {
+
+		// 返回下一条记录
+		StorageIoDetail next = this.storageIoDetailDao.findNextRecordForPickup(batchId);
+		if (next == null) {
+			logger.info("[本批次已配完] batchId={}, operator={}", batchId, operator);
 			return null;
 		}
-		// 返回下一条记录，status:waiting->processing（防止多个操作员同时操作过程中看到同一个记录）
-		StorageIoDetail detail = next.getContent().get(0);
-		detail.setDetailStatus(DetailStatus.PROCESSING.getValue());
-		detail.setOperator(operator);
-		this.storageIoDetailDao.save(detail);
-		return detail;
+		// status:waiting->processing（防止多个操作员同时操作过程中看到同一个记录）
+		next.setDetailStatus(DetailStatus.PROCESSING.getValue());
+		next.setOperator(operator);
+		this.storageIoDetailDao.save(next);
+		logger.info("[锁定配货记录] ioDetailId={}, batchId={}, operator={}", next.getDetailId(), batchId, operator);
+		return next;
 	}
 
 	@Override
+	@Transactional
 	public StorageIoDetail lackAll(Integer ioDetailId, Integer operator) {
-		// TODO Auto-generated method stub
-		return null;
+		logger.info("[全部缺货] ioDetailId={}, operator={}", ioDetailId, operator);
+		checkForPickup(ioDetailId, operator);
+		// 更新出库明细为缺货
+		StorageIoDetail detail = findAndCheckDetailForPickupOrLackness(ioDetailId, operator);
+		// 结束占用，更新商品库存（减少总量、可用量，占用量不变），更新库位库存（减少总量、占用量），更新出库明细
+		finishOccupy(detail, DetailStatus.LACKNESS);
+		// 重新生成等待取件的记录，并关联到当前批次中
+		StorageIoBatch batch = this.storageIoBatchDao.findOne(detail.getBatchId());
+		arrangeOrder(operator, batch, detail.getProductId(), detail.getAmount(), detail.getOrderId());
+		// 返回下一条等待取件的记录
+		return doPickupLock(batch.getBatchId(), operator);
 	}
 
 	@Override
+	@Transactional
 	public StorageIoDetail lackPart(Integer ioDetailId, Integer operator, Integer actualAmt) {
-		// TODO Auto-generated method stub
-		return null;
+		logger.info("[部分缺货] ioDetailId={}, operator={}, 实际发货量={}", ioDetailId, operator, actualAmt);
+		checkForPickup(ioDetailId, operator);
+		if (actualAmt == null || actualAmt < 0) {
+			throw new IllegalArgumentException("actualAmt不合法，actualAmt=" + actualAmt);
+		}
+		logger.info("[部分缺货] 作废原有出入库明细, ioDetailId={}", ioDetailId);
+		// 根据actualAmt，把detail拆分成有货和缺货两条记录
+		StorageIoDetail detail = findAndCheckDetailForPickupOrLackness(ioDetailId, operator);
+		if(detail.getAmount() <= actualAmt) {
+			throw new IllegalArgumentException("实际配货量错误，actualAmt必须小于detail.amount");
+		}
+		updateDetailStatusAndBalance(detail, 0, DetailStatus.USELESS);
+		
+		// 对于有货部分，更新库存量，结束占用，更新出库明细
+		Date now = new Date();
+		StorageIoDetail actualSend = new StorageIoDetail();
+		BeanUtils.copyProperties(detail, actualSend);
+		actualSend.setDetailId(null);
+		actualSend.setAmount(actualAmt);
+		actualSend.setGmtCreate(now);
+		actualSend.setGmtModify(now);
+		// actualSend.setDetailStatus(DetailStatus.PROCESSING.getValue());
+		actualSend = this.storageIoDetailDao.save(actualSend);
+		logger.info("[部分缺货] 出库部分, ioDetailId={}, orderId={}, 实际发货量={}", actualSend.getDetailId(), actualSend.getOrderId(), actualAmt);
+		finishOccupy(actualSend, DetailStatus.SUCCESS);
+		
+		// 对于缺货部分，执行全部缺货逻辑，并返回下一条待取件的记录
+		Integer lackness = detail.getAmount() - actualAmt;
+		StorageIoDetail lackDetail = new StorageIoDetail();
+		BeanUtils.copyProperties(detail, lackDetail);
+		lackDetail.setDetailId(null);
+		lackDetail.setAmount(lackness);
+		lackDetail.setGmtModify(new Date());
+		lackDetail.setDetailStatus(DetailStatus.PROCESSING.getValue());
+		lackDetail.setGmtCreate(now);
+		lackDetail.setGmtModify(now);
+		lackDetail = this.storageIoDetailDao.save(lackDetail);
+		logger.info("[部分缺货] 缺货部分, ioDetailId={}, orderId={}, 实际缺货量={}", actualSend.getDetailId(), actualSend.getOrderId(), lackness);
+		return lackAll(lackDetail.getDetailId(), operator);
 	}
 
 	@Override
@@ -328,14 +530,15 @@ public class StorageServiceImpl implements StorageService {
 		if (batch == null) {
 			throw new RuntimeException("batch不存在, batchId=" + batchId);
 		}
-		if(!BizType.OUT_BATCH.getValue().equals(batch.getBizType())) {
+		if (!BizType.OUT_BATCH.getValue().equals(batch.getBizType())) {
 			throw new RuntimeException("批次类型必须是out_batch");
 		}
-		if(!StorageIoBatch.Status.CREATED.getValue().equals(batch.getStatus())) {
+		if (!StorageIoBatch.Status.CREATED.getValue().equals(batch.getStatus())) {
 			throw new RuntimeException("批次状态必须是created");
 		}
-		List<StorageIoDetail> list = this.storageIoDetailDao.findByBatchIdAndDetailStatus(batchId, DetailStatus.WAITING.getValue());
-		if(!CollectionUtils.isEmpty(list)) {
+		List<StorageIoDetail> list = this.storageIoDetailDao.findByBatchIdAndDetailStatus(batchId,
+				DetailStatus.WAITING.getValue());
+		if (!CollectionUtils.isEmpty(list)) {
 			throw new RuntimeException("还有未完成的配货明细");
 		}
 		Date now = new Date();
@@ -343,11 +546,13 @@ public class StorageServiceImpl implements StorageService {
 		batch.setGmtModify(now);
 		this.storageIoBatchDao.save(batch);
 		this.storageOrderDao.updateToSentByBatchId(batchId);
+		logger.info("[批量出库完成] batchId={}", batchId);
 	}
 
 	@Override
 	@Transactional
 	public void cancelOrder(Integer orderId) {
+		logger.info("[取消订单] orderId={}", orderId);
 		if (orderId == null) {
 			throw new IllegalArgumentException("orderId不能为空");
 		}
@@ -355,7 +560,7 @@ public class StorageServiceImpl implements StorageService {
 		if (order == null) {
 			throw new RuntimeException("order不存在, orderId=" + orderId);
 		}
-		if(!TradeStatus.CREATED.getValue().equals(order.getTradeStatus())) {
+		if (!TradeStatus.CREATED.getValue().equals(order.getTradeStatus())) {
 			throw new RuntimeException("配货中的订单，不允许取消");
 		}
 		order.setTradeStatus(TradeStatus.CANCEL.getValue());
@@ -364,9 +569,10 @@ public class StorageServiceImpl implements StorageService {
 		undoOccupy(orderId);
 		undoOccupyPosStock(orderId);
 	}
-	
+
 	/**
 	 * 取消库位库存占用
+	 * 
 	 * @param orderId
 	 */
 	private void undoOccupyPosStock(Integer orderId) {
@@ -376,27 +582,30 @@ public class StorageServiceImpl implements StorageService {
 			detail.setDetailStatus(DetailStatus.CANCEL.getValue());
 			detail.setGmtModify(now);
 			this.storageIoDetailDao.save(detail);
-			StoragePosStock stock = this.storagePosStockDao.findByPosIdAndProductId(detail.getPosId(), detail.getProductId());
+			StoragePosStock stock = this.storagePosStockDao.findByPosIdAndProductId(detail.getPosId(),
+					detail.getProductId());
 			if (stock == null) {
-				throw new RuntimeException(String.format("StoragePosStock不存在, posId=%s,productId=%s", detail.getPosId(), detail.getProductId()));
+				throw new RuntimeException(String.format("StoragePosStock不存在, posId=%s,productId=%s",
+						detail.getPosId(), detail.getProductId()));
 			}
 			stock.setOccupyAmt(stock.getOccupyAmt() - detail.getAmount());
 			stock.setGmtModify(now);
 			this.storagePosStockDao.save(stock);
+			logger.info("[取消库位库存占用] orderId={}, prodId={}, skuId={}, amount={}",
+					orderId, detail.getProductId(), detail.getSkuId(), detail.getAmount());
 		}
 	}
 
 	@Override
 	@Transactional
 	public StorageIoBatch createInStorage(Integer repoId, String memo, Integer operator) {
-		if(repoId == null) {
+		if (repoId == null) {
 			throw new IllegalArgumentException("repoId不能为空");
 		}
-		if(operator == null) {
+		if (operator == null) {
 			throw new IllegalArgumentException("operator不能为空");
 		}
-		StorageIoBatch batch = saveStorageIoBatch(repoId, operator, BizType.IN_BATCH, memo);
-		return batch;
+		return saveStorageIoBatch(repoId, operator, BizType.IN_BATCH, memo);
 	}
 
 	private StorageIoBatch saveStorageIoBatch(Integer repoId, Integer operator, BizType bizType, String memo) {
@@ -411,25 +620,26 @@ public class StorageServiceImpl implements StorageService {
 		batch.setGmtCreate(now);
 		batch.setGmtModify(now);
 		this.storageIoBatchDao.save(batch);
+		logger.info("[保存出入库批次], batchId={}, repoId={}, operator={}, bizType={}", batch.getBatchId(), repoId, operator, bizType.getValue());
 		return batch;
 	}
 
 	@Override
 	@Transactional
-	public void addInStorageDetail(Integer batchId, Integer skuId, Integer amount, String posLabel, Integer operator) {
-		if(batchId == null) {
+	public StorageIoDetail addInStorageDetail(Integer batchId, Integer skuId, Integer amount, String posLabel, Integer operator) {
+		if (batchId == null) {
 			throw new IllegalArgumentException("batchId不能为空");
 		}
-		if(skuId == null) {
+		if (skuId == null) {
 			throw new IllegalArgumentException("skuId不能为空");
 		}
-		if(amount == null || amount <= 0) {
+		if (amount == null || amount <= 0) {
 			throw new IllegalArgumentException("入库数量错误，amount=" + amount);
 		}
-		if(StringUtils.isBlank(posLabel)) {
+		if (StringUtils.isBlank(posLabel)) {
 			throw new IllegalArgumentException("库位标签posLabel不能为空");
 		}
-		if(operator == null) {
+		if (operator == null) {
 			throw new IllegalArgumentException("operator不能为空");
 		}
 		// 批次存在，且必须是入库类型，CREATED状态
@@ -442,26 +652,49 @@ public class StorageServiceImpl implements StorageService {
 		if (prod == null) {
 			prod = buildNewStorageProduct(skuId, batch.getRepoId());
 			this.storageProductDao.save(prod);
+			logger.info("[新增库存商品] skuId={}, repoId={}", skuId, batch.getRepoId());
 		}
 		// 库位必须存在且可用
 		StoragePosition pos = this.storagePositionDao.findByLabelAndRepoId(posLabel, batch.getRepoId());
-		if(pos == null) {
-			throw new IllegalArgumentException(String.format("库位不存在，repoId=%s, posLabel=%s", batch.getRepoId(), posLabel));
+		if (pos == null) {
+			throw new IllegalArgumentException(String.format("库位不存在，repoId=%s, posLabel=%s", batch.getRepoId(),
+					posLabel));
 		}
-		if(!StoragePosition.PosStatus.AVAILABLE.getValue().equals(pos.getPosStatus())) {
-			throw new RuntimeException(String.format("库位状态不允许入库操作, posId=%s, status=%s", pos.getPosId(), pos.getPosStatus()));
+		if (!StoragePosition.PosStatus.AVAILABLE.getValue().equals(pos.getPosStatus())) {
+			throw new RuntimeException(String.format("库位状态不允许入库操作, posId=%s, status=%s", pos.getPosId(),
+					pos.getPosStatus()));
 		}
-		saveStorageIoDetail(batch, pos, prod.getProductId(), skuId, amount, operator, null);
+		return saveStorageIoDetail(batch, pos, prod.getProductId(), skuId, amount, operator, null);
+	}
+	
+	private StorageIoDetail saveStorageIoDetail(StorageIoBatch batch, Integer posId, String posLabel, Integer productId, Integer skuId,
+			Integer amount, Integer operator, Integer orderId) {
+		StoragePosition pos = new StoragePosition();
+		pos.setPosId(posId);
+		pos.setLabel(posLabel);
+		return this.saveStorageIoDetail(batch, pos, productId, skuId, amount, operator, orderId);
 	}
 
-	private void saveStorageIoDetail(StorageIoBatch batch, StoragePosition pos, Integer productId, Integer skuId, Integer amount, Integer operator, Integer orderId) {
+	/**
+	 * 保存出入库明细，状态为WAITING
+	 * @param batch
+	 * @param pos
+	 * @param productId
+	 * @param skuId
+	 * @param amount
+	 * @param operator
+	 * @param orderId
+	 * @return
+	 */
+	private StorageIoDetail saveStorageIoDetail(StorageIoBatch batch, StoragePosition pos, Integer productId, Integer skuId,
+			Integer amount, Integer operator, Integer orderId) {
 		StorageIoDetail detail = new StorageIoDetail();
 		detail.setSkuId(skuId);
 		detail.setAmount(amount);
 		detail.setProductId(productId);
 		detail.setBatchId(batch.getBatchId());
 		detail.setDetailStatus(DetailStatus.WAITING.getValue());
-		if(BizType.isInStorage(batch.getBizType())) {
+		if (BizType.isInStorage(batch.getBizType())) {
 			detail.setIoDetailType(IoType.IN.getValue());
 		} else {
 			detail.setIoDetailType(IoType.OUT.getValue());
@@ -475,16 +708,19 @@ public class StorageServiceImpl implements StorageService {
 		detail.setGmtCreate(now);
 		detail.setGmtModify(now);
 		this.storageIoDetailDao.save(detail);
+		logger.info("[保存出入库明细] detailId={}, skuId={}, amount={}, productId={}, bizType={}, operator={}", 
+				detail.getDetailId(), skuId, amount, productId, batch.getBizType(), operator);
+		return detail;
 	}
 
 	private void checkStorageIoBatchForInStorage(Integer batchId, StorageIoBatch batch) {
-		if(batch == null) {
+		if (batch == null) {
 			throw new IllegalArgumentException("入库批次不存在，batchId=" + batchId);
 		}
-		if(!StorageIoBatch.BizType.IN_BATCH.getValue().equals(batch.getBizType())) {
+		if (!BizType.isInStorage(batch.getBizType())) {
 			throw new RuntimeException("入库批次类型错误, bizType=" + batch.getBizType());
 		}
-		if(!StorageIoBatch.Status.CREATED.getValue().equals(batch.getStatus())) {
+		if (!StorageIoBatch.Status.CREATED.getValue().equals(batch.getStatus())) {
 			throw new RuntimeException("入库批次状态错误, status=" + batch.getStatus());
 		}
 	}
@@ -501,20 +737,22 @@ public class StorageServiceImpl implements StorageService {
 		// 批次存在，且必须是入库类型，CREATED状态
 		StorageIoBatch batch = this.storageIoBatchDao.findOne(batchId);
 		checkStorageIoBatchForInStorage(batchId, batch);
-		this.storageIoBatchDao.save(batch);
 		List<StorageIoDetail> list = this.storageIoDetailDao.findByBatchId(batchId);
-		if(list == null || list.isEmpty()) {
+		if (list == null || list.isEmpty()) {
 			throw new RuntimeException("该批次没有记录，无法进行确认入库操作，batchId=" + batchId);
 		}
 		// 针对每一个入库明细：更新状态为已完成，增加库位库存，增加总库存
 		for (StorageIoDetail detail : list) {
-			inStorageForOne(batch, detail);
+			inStorageForOne(detail);
 		}
-		// 更新入库批次，st=已完成 
+		// 更新入库批次，st=已完成
 		batch.setStatus(StorageIoBatch.Status.FINISH.getValue());
+		batch.setGmtModify(new Date());
+		this.storageIoBatchDao.save(batch);
+		logger.info("[确认批量入库] batchId={}, operator={}", batchId, operator);
 	}
 
-	private void inStorageForOne(StorageIoBatch batch, StorageIoDetail detail) {
+	private void inStorageForOne(StorageIoDetail detail) {
 		// 增加总库存（如果没有，则报错）
 		StorageProduct prod = this.storageProductDao.findOne(detail.getProductId());
 		if (prod == null) {
@@ -523,17 +761,29 @@ public class StorageServiceImpl implements StorageService {
 		prod.setStockAmt(prod.getStockAmt() + detail.getAmount());
 		prod.setStockAvailable(prod.getStockAvailable() + detail.getAmount());
 		this.storageProductDao.save(prod);
-		// 更新入库明细，st=已完成 
-		detail.setDetailStatus(DetailStatus.SUCCESS.getValue());
-		detail.setProductId(prod.getProductId());
-		this.storageIoDetailDao.save(detail);
 		// 增加库位库存（如果没有，则新增）
-		StoragePosStock posStock = this.storagePosStockDao.findByPosIdAndProductId(detail.getPosId(), prod.getProductId());
+		StoragePosStock posStock = this.storagePosStockDao.findByPosIdAndProductId(detail.getPosId(),
+				prod.getProductId());
 		if (posStock == null) {
 			posStock = buildNewStoragePosStock(detail.getPosId(), prod.getProductId());
 		}
 		posStock.setTotalAmt(posStock.getTotalAmt() + detail.getAmount());
 		this.storagePosStockDao.save(posStock);
+		// 更新入库状态为success，记录剩余库位库存量
+		updateDetailStatusAndBalance(detail, posStock.getTotalAmt(), DetailStatus.SUCCESS);
+	}
+
+	// 更新出入库明细的状态和操作完成后库位库位的余量
+	private void updateDetailStatusAndBalance(StorageIoDetail detail, Integer balance, DetailStatus status) {
+		if(!DetailStatus.isFinalStatus(status)) {
+			throw new RuntimeException("DetailStatus必须是SUCCESS或LACKNESS, 实际值为:" + status.getValue());
+		}
+		detail.setBalance(balance);
+		detail.setDetailStatus(status.getValue());
+		detail.setGmtModify(new Date());
+		logger.info("[更新出入库明细] detailId={}, balance={}, status={}", 
+				detail.getDetailId(), balance, status.getValue());
+		this.storageIoDetailDao.save(detail);
 	}
 
 	private StoragePosStock buildNewStoragePosStock(Integer posId, Integer productId) {
@@ -578,17 +828,33 @@ public class StorageServiceImpl implements StorageService {
 		// 批次存在，且必须是入库类型，CREATED状态
 		StorageIoBatch batch = this.storageIoBatchDao.findOne(batchId);
 		checkStorageIoBatchForInStorage(batchId, batch);
+		if (!BizType.IN_BATCH.getValue().equals(batch.getBizType())) {
+			throw new RuntimeException("只有批量入库可以被取消");
+		}
 		batch.setStatus(StorageIoBatch.Status.CANCEL.getValue());
-		// 更新入库明细，st=已取消 
-		// 更新入库批次，st=已取消 
+		// 更新入库明细，st=已取消
+		// 更新入库批次，st=已取消
 		this.storageIoBatchDao.save(batch);
 		this.storageIoDetailDao.batchCancel(batchId);
+		logger.info("[取消入库] batchId={}, operator={}", batchId, operator);
 	}
 
 	@Override
+	@Transactional
 	public void directInStorage(Integer repoId, Integer skuId, Integer amount, String posLabel, Integer operator) {
-		// TODO Auto-generated method stub
-
+		if (repoId == null) {
+			throw new IllegalArgumentException("repoId不能为空");
+		}
+		// 自动关联当日批次
+		StorageIoBatch batch = this.storageIoBatchDao.findDailyBatchByBizTypeAndRepoId(BizType.IN_DAILY.getValue(), repoId);
+		if(batch == null) {
+			batch = saveStorageIoBatch(repoId, null, BizType.IN_DAILY, "当日自动批次");
+		}
+		logger.info("[直接入库] 自动关联当日批次 batchId={}, skuId={}, amount={}, posLabel={}", batch.getBatchId(), skuId, amount, posLabel);
+		// 增加入库明细
+		StorageIoDetail detail = addInStorageDetail(batch.getBatchId(), skuId, amount, posLabel, operator);
+		// 增加商品库存、库位库存
+		inStorageForOne(detail);
 	}
 
 	@Override
@@ -605,6 +871,7 @@ public class StorageServiceImpl implements StorageService {
 		pos.setRepoId(repoId);
 		pos.setPosStatus(PosStatus.AVAILABLE.getValue());
 		this.storagePositionDao.save(pos);
+		logger.info("[新增库位] repoId={}, posLabel={}", repoId, posLabel);
 		return pos;
 	}
 

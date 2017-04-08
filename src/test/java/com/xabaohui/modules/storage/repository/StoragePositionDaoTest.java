@@ -36,7 +36,7 @@ public class StoragePositionDaoTest extends BaseTestUnit {
 	
 	@Test
 	public void testFindByLabelAndRepoId() {
-		final Integer repoId = 1;
+		final Integer repoId = 199;
 		StoragePosition pos = buildPosition();
 		pos.setRepoId(repoId);
 		dao.save(pos);
@@ -48,7 +48,7 @@ public class StoragePositionDaoTest extends BaseTestUnit {
 
 	private StoragePosition buildPosition() {
 		StoragePosition pos = new StoragePosition();
-		pos.setLabel("L" + new Random().nextInt(100000));
+		pos.setLabel("L-" + new Random().nextInt(100000));
 		pos.setRepoId(1);
 		pos.setPosStatus(PosStatus.AVAILABLE.getValue());
 		pos.setGmtCreate(new Date());

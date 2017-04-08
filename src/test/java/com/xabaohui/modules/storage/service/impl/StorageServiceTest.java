@@ -2,7 +2,6 @@ package com.xabaohui.modules.storage.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,55 +18,74 @@ import com.xabaohui.modules.storage.service.StorageService;
 
 public class StorageServiceTest extends BaseTestUnit {
 	
-	final Integer operator = 9527;
-	final Integer repoId = 6;
-
+	final Integer operator = 1001;
+	final Integer repoId = 22;
+	final Integer skuId = 10021;
+	
 	@Autowired
 	StorageService service;
 	
 	@Test
 	public void testCreateStoragePosition() {
-		service.createStoragePosition(repoId, "A-02-01-4498");
+		service.createStoragePosition(repoId, "A-01-01-08");
+		service.createStoragePosition(repoId, "B-02-01-08");
+		service.createStoragePosition(repoId, "D-04-03-02");
 	}
 	
 	@Test
 	public void testCreateInStorage() {
-		StorageIoBatch batch = service.createInStorage(6, "测试创建入库单", 9527);
+		StorageIoBatch batch = service.createInStorage(repoId, "测试创建入库单", operator);
 	}
 	
 	@Test
 	public void testAddInStorageDetail() {
-		final String posLabel = "A-01-01-" + new Random().nextInt(10000);
+		final String posLabel = "A-01-01-08";
 		StorageIoBatch batch = service.createInStorage(repoId, "测试创建入库单", operator);
-		service.createStoragePosition(repoId, posLabel);
-		service.addInStorageDetail(batch.getBatchId(), 1102, 3, posLabel, operator);
+//		service.createStoragePosition(repoId, posLabel);
+		service.addInStorageDetail(batch.getBatchId(), skuId, 3, posLabel, operator);
 	}
 	
 	@Test
 	public void testConfirmInStorage() {
-		final String posLabel = "D-01-01-4498";
+		final String posLabel = "A-01-01-08";
 		StorageIoBatch batch = service.createInStorage(repoId, "测试创建入库单", operator);
-		service.addInStorageDetail(batch.getBatchId(), 1102, 2, posLabel, operator);
+		service.addInStorageDetail(batch.getBatchId(), skuId, 4, posLabel, operator);
 		service.confirmInStorage(batch.getBatchId(), operator);
 	}
 	
 	@Test
 	public void testCancelInStorage() {
-		final String posLabel = "A-01-01-4498";
-		StorageIoBatch batch = service.createInStorage(repoId, "测试创建入库单", operator);
-		service.addInStorageDetail(batch.getBatchId(), 1102, 3, posLabel, operator);
+		final String posLabel = "A-01-01-08";
+		StorageIoBatch batch = service.createInStorage(repoId, "测试入库单-取消操作", operator);
+		service.addInStorageDetail(batch.getBatchId(), skuId, 3, posLabel, operator);
 		service.cancelInStorage(batch.getBatchId(), operator);
+	}
+	
+	@Test
+	public void testDirectInStorage() {
+		service.directInStorage(repoId, skuId, 5, "A-01-01-08", operator);
+		service.directInStorage(repoId, skuId, 2, "B-02-01-08", operator);
+		service.directInStorage(repoId, skuId, 3, "D-04-03-02", operator);
+	}
+	
+	// --- 测试出库 ---
+	
+	@Test
+	public void testDirectSend() {
+		service.directSend(repoId, skuId, 2, "A-01-01-08", operator);
+		service.directSend(repoId, skuId, 2, "B-02-01-08", operator);
+		service.directSend(repoId, skuId, 2, "D-04-03-02", operator);
 	}
 	
 	@Test
 	public void testCreateOrder() {
 		List<CreateOrderDetail> detailList = new ArrayList<CreateOrderDTO.CreateOrderDetail>();
 		CreateOrderDetail d = new CreateOrderDetail();
-		d.setAmount(6);
-		d.setSkuId(1102);
+		d.setAmount(4);
+		d.setSkuId(skuId);
 		detailList.add(d);
 		CreateOrderDTO request = new CreateOrderDTO();
-		request.setOutTradeNo("test-20170301001");
+		request.setOutTradeNo("test-20170301099");
 		request.setOrderType(OrderType.SELF);
 		request.setRepoId(repoId);
 		request.setShopId(1113);
@@ -76,30 +94,46 @@ public class StorageServiceTest extends BaseTestUnit {
 	}
 	
 	@Test
-	public void testPrepareBatchSend() {
+	public void testArrangeOrder() {
 		List<Integer> orderIds = new ArrayList<Integer>();
-		orderIds.add(23);
-		service.prepareBatchSend(repoId, orderIds, operator);
+		orderIds.add(35);
+		service.arrangeOrder(repoId, orderIds, operator);
 	}
 	
 	@Test
 	public void testPickup() {
-		StorageIoDetail detail = service.pickupLock(43, operator);
+		StorageIoDetail detail = service.pickupLock(93, operator);
 		System.out.println(JSONObject.toJSONString(detail));
-		do {
+		while (detail != null){
 			detail = service.pickupDoneAndLockNext(detail.getDetailId(), operator);
 			System.out.println(JSONObject.toJSONString(detail));
-		} while (detail != null);
+		}
 		Assert.assertNull(detail);
 	}
 	
 	@Test
+	public void testLackAll() {
+		// 取件
+		StorageIoDetail detail = service.pickupLock(93, operator);
+		// 缺货
+		service.lackAll(detail.getDetailId(), operator);
+	}
+	
+	@Test
+	public void testLackPart() {
+		// 取件
+		StorageIoDetail detail = service.pickupLock(93, operator);
+		// 缺货
+		service.lackPart(detail.getDetailId(), operator, 1);
+	}
+	
+	@Test
 	public void testCancelOrder() {
-		service.cancelOrder(20);
+		service.cancelOrder(24);
 	}
 	
 	@Test
 	public void testFinishBatchSend() {
-		service.finishBatchSend(43);
+		service.finishBatchSend(63);
 	}
 }
